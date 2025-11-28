@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const pricing = [
   {
@@ -80,11 +81,12 @@ export function PricingSection() {
               transition={{ delay: i * 0.1 }}
             >
               <Card
-                className={`relative h-full border-border/50 bg-card/50 p-6 backdrop-blur-sm ${
+                className={cn(
+                  "relative h-full border-border/50 bg-card/50 p-6 backdrop-blur-sm",
                   plan.highlighted
                     ? "shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] border-primary/50 bg-card/80"
-                    : "hover:border-border"
-                }`}
+                    : "hover:border-border",
+                )}
               >
                 {plan.highlighted && (
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">

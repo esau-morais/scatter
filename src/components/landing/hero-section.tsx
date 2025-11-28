@@ -12,6 +12,7 @@ import {
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const platforms = [
   { name: "X Thread", icon: Twitter, color: "text-sky-400" },
@@ -23,7 +24,7 @@ const platforms = [
 export function HeroSection() {
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-16 z-10">
-      {/* Decorative elements */}
+      {/* Window control buttons */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/4 h-80 w-80 rounded-full bg-primary/20 blur-[120px]" />
         <div className="absolute top-1/3 -right-20 h-60 w-60 rounded-full bg-chart-2/20 blur-[100px]" />
@@ -90,7 +91,6 @@ export function HeroSection() {
           </Button>
         </motion.div>
 
-        {/* Stats */}
         <motion.div
           className="mt-16 flex items-center justify-center gap-8 text-sm text-muted-foreground sm:gap-12"
           initial={{ opacity: 0 }}
@@ -118,7 +118,6 @@ export function HeroSection() {
         </motion.div>
       </div>
 
-      {/* Demo Preview */}
       <motion.div
         className="relative z-10 mt-20 w-full max-w-5xl px-4"
         initial={{ opacity: 0, y: 40 }}
@@ -135,7 +134,6 @@ export function HeroSection() {
             </span>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Input Side */}
             <div className="rounded-xl border border-border bg-secondary/50 p-4">
               <div className="mb-3 text-sm font-medium text-muted-foreground">
                 Your Core Idea
@@ -146,7 +144,6 @@ export function HeroSection() {
                 something valuable. Stop selling. Start helping.
               </div>
             </div>
-            {/* Output Side */}
             <div className="space-y-3">
               {platforms.map((platform, i) => (
                 <motion.div
@@ -156,7 +153,7 @@ export function HeroSection() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 + i * 0.1 }}
                 >
-                  <platform.icon className={`h-4 w-4 ${platform.color}`} />
+                  <platform.icon className={cn("size-4", platform.color)} />
                   <span className="flex-1 text-sm">{platform.name}</span>
                   <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10">
                     <Check className="h-3 w-3 text-primary" />
