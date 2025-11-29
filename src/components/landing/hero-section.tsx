@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowRight,
   Check,
   FileText,
   Linkedin,
@@ -12,6 +11,7 @@ import {
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { WaitlistForm } from "@/components/waitlist/waitlist-form";
 import { cn } from "@/lib/utils";
 
 const platforms = [
@@ -74,20 +74,22 @@ export function HeroSection() {
         </motion.p>
 
         <motion.div
-          className="flex flex-col items-center justify-center gap-4 sm:flex-row"
+          className="flex flex-col items-center justify-center gap-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
+          <WaitlistForm variant="hero" />
           <Button
-            size="lg"
-            className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] group px-8 text-base"
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() =>
+              document
+                .getElementById("how-it-works")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
           >
-            Get Early Access
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
-          <Button size="lg" variant="outline" className="px-8 text-base">
-            See How It Works
+            See How It Works ↓
           </Button>
         </motion.div>
 

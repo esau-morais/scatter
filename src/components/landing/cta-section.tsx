@@ -1,8 +1,7 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
-import { Button } from "@/components/ui/button";
+import { WaitlistForm } from "@/components/waitlist/waitlist-form";
 
 export function CTASection() {
   return (
@@ -15,6 +14,7 @@ export function CTASection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          className="flex flex-col items-center"
         >
           <h2 className="mb-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
             Ready to stop the
@@ -27,13 +27,7 @@ export function CTASection() {
             Join creators who are reclaiming their time and energy. Write once,
             scatter everywhere.
           </p>
-          <Button
-            size="lg"
-            className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] group px-10 text-base"
-          >
-            Join the Waitlist
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
+          <WaitlistForm variant="cta" />
         </motion.div>
       </div>
     </section>
