@@ -2,10 +2,18 @@
 
 import { Check } from "lucide-react";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
+import { CheckoutButton } from "@/components/billing/checkout-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { authClient } from "@/lib/auth/auth-client";
 import { cn } from "@/lib/utils";
+
+const PLAN_IDS = {
+  creator: "cca63744-a831-4534-8af6-38d1a08d2f29",
+  pro: "789-ghi-012-jkl",
+} as const;
 
 const pricing = [
   {
@@ -33,6 +41,7 @@ const pricing = [
     ],
     cta: "Start Creating",
     highlighted: true,
+    planId: PLAN_IDS.creator,
   },
   {
     name: "Pro",
@@ -47,10 +56,23 @@ const pricing = [
     ],
     cta: "Go Pro",
     highlighted: false,
+    planId: PLAN_IDS.pro,
   },
 ];
 
 export function PricingSection() {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+  const isAuthenticated = !!session?.session;
+
+  const handleFreePlan = () => {
+    router.push("/login");
+  };
+
+  const handlePaidPlan = () => {
+    router.push("/login");
+  };
+
   return (
     <section className="relative py-24 z-10">
       <div className="mx-auto max-w-6xl px-6">
@@ -116,12 +138,27 @@ export function PricingSection() {
                     </li>
                   ))}
                 </ul>
-                <Button
-                  className="w-full"
-                  variant={plan.highlighted ? "default" : "outline"}
-                >
-                  {plan.cta}
-                </Button>
+                {plan.planId ? (
+                  isAuthenticated ? (
+                    <CheckoutButton planId={plan.planId} planName={plan.name} />
+                  ) : (
+                    <Button
+                      className="w-full"
+                      variant={plan.highlighted ? "default" : "outline"}
+                      onClick={handlePaidPlan}
+                    >
+                      {plan.cta}
+                    </Button>
+                  )
+                ) : (
+                  <Button
+                    className="w-full"
+                    variant={plan.highlighted ? "default" : "outline"}
+                    onClick={handleFreePlan}
+                  >
+                    {plan.cta}
+                  </Button>
+                )}
               </Card>
             </motion.div>
           ))}

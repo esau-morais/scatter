@@ -1,5 +1,5 @@
 {
-  "id": "6a564725-6897-41a2-8e89-6dd088f30818",
+  "id": "723e2eb6-d89a-43ef-a90e-e2b78a6e9438",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -144,6 +144,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "approved": {
+          "name": "approved",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -414,6 +421,26 @@
           "primaryKey": false,
           "notNull": false
         },
+        "plan": {
+          "name": "plan",
+          "type": "plan",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'free'"
+        },
+        "polar_customer_id": {
+          "name": "polar_customer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "polar_subscription_id": {
+          "name": "polar_subscription_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -512,15 +539,15 @@
     }
   },
   "enums": {
-    "public.plan": {
-      "name": "plan",
-      "schema": "public",
-      "values": ["free", "creator", "pro"]
-    },
     "public.platform": {
       "name": "platform",
       "schema": "public",
       "values": ["x", "linkedin", "tiktok", "blog"]
+    },
+    "public.plan": {
+      "name": "plan",
+      "schema": "public",
+      "values": ["free", "creator", "pro"]
     }
   },
   "schemas": {},

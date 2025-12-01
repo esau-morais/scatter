@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { LoginContainer, LoginForm } from "@/components/auth/login-form";
 import { Card } from "@/components/ui/card";
 
@@ -35,7 +36,9 @@ export default function LoginPage() {
         </div>
 
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm p-6">
-          <LoginForm />
+          <Suspense>
+            <LoginForm />
+          </Suspense>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             By continuing, you agree to our{" "}

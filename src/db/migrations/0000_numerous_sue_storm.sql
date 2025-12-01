@@ -1,5 +1,5 @@
-CREATE TYPE "public"."plan" AS ENUM('free', 'creator', 'pro');--> statement-breakpoint
 CREATE TYPE "public"."platform" AS ENUM('x', 'linkedin', 'tiktok', 'blog');--> statement-breakpoint
+CREATE TYPE "public"."plan" AS ENUM('free', 'creator', 'pro');--> statement-breakpoint
 CREATE TABLE "seeds" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
@@ -21,6 +21,7 @@ CREATE TABLE "transformations" (
 CREATE TABLE "waitlist" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" text NOT NULL,
+	"approved" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "waitlist_email_unique" UNIQUE("email")
 );
@@ -59,6 +60,9 @@ CREATE TABLE "user" (
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
+	"plan" "plan" DEFAULT 'free' NOT NULL,
+	"polar_customer_id" text,
+	"polar_subscription_id" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "user_email_unique" UNIQUE("email")
