@@ -3,15 +3,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { polar } from "@/lib/polar";
+import { PLAN_IDS } from "@/lib/polar/plans";
 
 const checkoutSchema = z.object({
   planId: z.string(),
 });
-
-const PLAN_IDS = {
-  creator: "cca63744-a831-4534-8af6-38d1a08d2f29",
-  pro: "789-ghi-012-jkl",
-};
 
 export async function POST(req: NextRequest) {
   const headersList = await headers();

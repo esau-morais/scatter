@@ -9,11 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { authClient } from "@/lib/auth/auth-client";
 import { cn } from "@/lib/utils";
-
-const PLAN_IDS = {
-  creator: "cca63744-a831-4534-8af6-38d1a08d2f29",
-  pro: "789-ghi-012-jkl",
-} as const;
+import { PLAN_IDS } from "@/lib/polar/plans";
 
 const pricing = [
   {

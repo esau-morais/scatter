@@ -1,10 +1,12 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { FileText, Sparkles, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import type { Seed, Transformation } from "@/db/schema";
+import { useTRPC } from "@/lib/trpc/client";
 
 type SeedHistoryItem = {
   seed: Seed;
@@ -16,7 +18,12 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ history = [] }: StatsCardsProps) {
+  const trpc = useTRPC();
   const hasData = history.length > 0;
+
+  const { data: usageData } = useQuery(
+    trpc.transformations.getUsage.queryOptions(),
+  );
 
   const calculatedStats = useMemo(() => {
     const totalTransformations = history.reduce(
@@ -40,13 +47,27 @@ export function StatsCards({ history = [] }: StatsCardsProps) {
     };
   }, [history]);
 
+  const getUsageSubtitle = () => {
+    if (!usageData) return "Loading...";
+    if (usageData.limit === null) {
+      return "Unlimited this month";
+    }
+    if (usageData.remaining === null) {
+      return `${usageData.limit} included in your plan`;
+    }
+    return `${usageData.remaining} remaining this month`;
+  };
+
   const stats = [
     {
       label: "Transformations",
       value: calculatedStats.totalTransformations,
       emptyValue: "0",
-      subtitle: "53 remaining this month", // This is still mocked
-      emptySubtitle: "100 included in your plan",
+      subtitle: getUsageSubtitle(),
+      emptySubtitle:
+        usageData?.limit === null
+          ? "Unlimited"
+          : `${usageData?.limit ?? "—"} included in your plan`,
       icon: Sparkles,
       color: "text-primary",
     },

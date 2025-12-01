@@ -1,14 +1,62 @@
 import { google } from "@ai-sdk/google";
+import { TRPCError } from "@trpc/server";
 import { generateObject } from "ai";
-import { eq } from "drizzle-orm";
+import { and, count, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { seeds, transformations } from "@/db/schema";
+import { user } from "@/lib/auth/auth-schema";
 import { protectedProcedure, router } from "../trpc";
 
 const platformEnum = z.enum(["x", "linkedin", "tiktok", "blog"]);
 
+const limits: Record<string, number | null> = {
+  free: 10,
+  creator: 100,
+  pro: null, // unlimited
+};
+
 export const transformationsRouter = router({
+  getUsage: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    // Get user plan
+    const [currentUser] = await db
+      .select({ plan: user.plan })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (!currentUser) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+    }
+
+    // Count transformations for current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [usageResult] = await db
+      .select({ count: count() })
+      .from(transformations)
+      .innerJoin(seeds, eq(transformations.seedId, seeds.id))
+      .where(
+        and(
+          eq(seeds.userId, userId),
+          gte(transformations.createdAt, startOfMonth),
+        ),
+      );
+
+    const currentUsage = usageResult?.count ?? 0;
+    const limit = limits[currentUser.plan];
+
+    return {
+      currentUsage,
+      limit,
+      remaining: limit !== null ? Math.max(0, limit - currentUsage) : null,
+      plan: currentUser.plan,
+    };
+  }),
+
   generate: protectedProcedure
     .input(
       z.object({
@@ -24,8 +72,44 @@ export const transformationsRouter = router({
       const { content, platforms } = input;
       const userId = ctx.session.user.id;
 
+      // Get user plan
+      const [currentUser] = await db
+        .select({ plan: user.plan })
+        .from(user)
+        .where(eq(user.id, userId))
+        .limit(1);
+
+      if (!currentUser) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+
+      // Check usage limits (count transformations for current month)
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const [usageResult] = await db
+        .select({ count: count() })
+        .from(transformations)
+        .innerJoin(seeds, eq(transformations.seedId, seeds.id))
+        .where(
+          and(
+            eq(seeds.userId, userId),
+            gte(transformations.createdAt, startOfMonth),
+          ),
+        );
+
+      const currentUsage = usageResult?.count ?? 0;
+
+      const limit = limits[currentUser.plan];
+      // Check if adding new transformations would exceed limit
+      if (limit !== null && currentUsage + platforms.length > limit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `Usage limit would be exceeded. You've used ${currentUsage}/${limit} transformations this month. Upgrade your plan to continue.`,
+        });
+      }
+
       const result = await db.transaction(async (tx) => {
-        // 1. Create the initial seed
         const [seed] = await tx
           .insert(seeds)
           .values({
@@ -35,7 +119,6 @@ export const transformationsRouter = router({
           })
           .returning();
 
-        // 2. Generate transformations using AI
         const { object: generated } = await generateObject({
           model: google("gemini-2.5-flash-preview-09-2025"),
           schema: z.object({
@@ -62,7 +145,6 @@ export const transformationsRouter = router({
           )}.`,
         });
 
-        // 3. Filter and prepare transformations for insertion
         const transformationsToInsert = generated.transformations
           .filter((t) => platforms.includes(t.platform))
           .map((t) => ({
@@ -77,7 +159,6 @@ export const transformationsRouter = router({
           );
         }
 
-        // 4. Save the transformations
         const savedTransformations = await tx
           .insert(transformations)
           .values(transformationsToInsert)

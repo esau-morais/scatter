@@ -9,12 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CheckoutButton } from "./checkout-button";
-
-// You'll need to replace these with the actual IDs from your Polar dashboard
-const PLAN_IDS = {
-  creator: "cca63744-a831-4534-8af6-38d1a08d2f29",
-  pro: "789-ghi-012-jkl", // Replace with your actual Pro plan ID
-};
+import { PLAN_IDS } from "@/lib/polar/plans";
 
 const plans = [
   {
