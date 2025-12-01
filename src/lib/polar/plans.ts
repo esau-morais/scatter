@@ -1,3 +1,5 @@
+import type { SDKOptions } from "@polar-sh/sdk";
+
 const PLAN_IDS_SANDBOX = {
   creator: "cca63744-a831-4534-8af6-38d1a08d2f29",
   pro: "4d216882-c6fa-4f19-bc5e-2e33446197e2",
@@ -8,18 +10,14 @@ const PLAN_IDS_PRODUCTION = {
   pro: "35274989-26a4-4fe9-9d24-134af6faf197",
 };
 
-function getEnvironment(): "production" | "sandbox" {
-  // On the server, check process.env.POLAR_ENVIRONMENT
+type ServerEnvironment = SDKOptions["server"];
+
+function getEnvironment(): ServerEnvironment {
   if (typeof window === "undefined") {
-    return (
-      (process.env.POLAR_ENVIRONMENT as "production" | "sandbox") || "sandbox"
-    );
+    return (process.env.POLAR_ENVIRONMENT as ServerEnvironment) || "sandbox";
   }
-  // On the client, check NEXT_PUBLIC_POLAR_ENVIRONMENT
-  // Note: You may need to add NEXT_PUBLIC_POLAR_ENVIRONMENT to your .env file
-  // for client-side access, or it will default to sandbox
   return (
-    (process.env.NEXT_PUBLIC_POLAR_ENVIRONMENT as "production" | "sandbox") ||
+    (process.env.NEXT_PUBLIC_POLAR_ENVIRONMENT as ServerEnvironment) ||
     "sandbox"
   );
 }
