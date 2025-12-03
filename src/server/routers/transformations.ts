@@ -41,7 +41,9 @@ export const transformationsRouter = router({
     const [stats] = await db
       .select()
       .from(usageStats)
-      .where(and(eq(usageStats.userId, userId), eq(usageStats.month, startOfMonth)));
+      .where(
+        and(eq(usageStats.userId, userId), eq(usageStats.month, startOfMonth)),
+      );
 
     const totalTransformations = stats?.transformationsCreated ?? 0;
     const postedTransformations = stats?.transformationsPosted ?? 0;
@@ -321,10 +323,7 @@ export const transformationsRouter = router({
         .innerJoin(seeds, eq(transformations.seedId, seeds.id))
         .where(eq(transformations.id, input.id));
 
-      if (
-        !transformation ||
-        transformation.seed.userId !== userId
-      ) {
+      if (!transformation || transformation.seed.userId !== userId) {
         throw new Error("Transformation not found");
       }
 
@@ -344,21 +343,49 @@ export const transformationsRouter = router({
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const delta = willBePosted ? 1 : -1;
 
-        await db
-          .insert(usageStats)
-          .values({
-            userId,
-            month: startOfMonth,
-            seedsCreated: 0,
-            transformationsCreated: 0,
-            transformationsPosted: delta,
-          })
-          .onConflictDoUpdate({
-            target: [usageStats.userId, usageStats.month],
-            set: {
-              transformationsPosted: sql`${usageStats.transformationsPosted} + ${delta}`,
-            },
-          });
+        if (delta > 0) {
+          await db
+            .insert(usageStats)
+            .values({
+              userId,
+              month: startOfMonth,
+              seedsCreated: 0,
+              transformationsCreated: 0,
+              transformationsPosted: delta,
+            })
+            .onConflictDoUpdate({
+              target: [usageStats.userId, usageStats.month],
+              set: {
+                transformationsPosted: sql`${usageStats.transformationsPosted} + ${delta}`,
+              },
+            });
+        } else {
+          const [existing] = await db
+            .select()
+            .from(usageStats)
+            .where(
+              and(
+                eq(usageStats.userId, userId),
+                eq(usageStats.month, startOfMonth),
+              ),
+            )
+            .limit(1);
+
+          if (existing) {
+            await db
+              .update(usageStats)
+              .set({
+                transformationsPosted: sql`${usageStats.transformationsPosted} + ${delta}`,
+              })
+              .where(
+                and(
+                  eq(usageStats.userId, userId),
+                  eq(usageStats.month, startOfMonth),
+                ),
+              );
+          }
+          // If no row exists, the original posting was in a different month, so skip
+        }
       }
 
       return updated;
@@ -481,7 +508,6 @@ export const transformationsRouter = router({
           Generate fresh, unique content that's different from before but maintains the same core message.`,
       });
 
-      // Update the transformation with new content
       const [updated] = await db
         .update(transformations)
         .set({
@@ -492,26 +518,38 @@ export const transformationsRouter = router({
         .returning();
 
       // If the transformation was previously posted, decrement the usage stats
+      // Only decrement if a row exists for the current month (to avoid negative values
+      // when the original posting was in a different month)
       if (wasPosted) {
         const userId = ctx.session.user.id;
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        await db
-          .insert(usageStats)
-          .values({
-            userId,
-            month: startOfMonth,
-            seedsCreated: 0,
-            transformationsCreated: 0,
-            transformationsPosted: -1,
-          })
-          .onConflictDoUpdate({
-            target: [usageStats.userId, usageStats.month],
-            set: {
+        const [existing] = await db
+          .select()
+          .from(usageStats)
+          .where(
+            and(
+              eq(usageStats.userId, userId),
+              eq(usageStats.month, startOfMonth),
+            ),
+          )
+          .limit(1);
+
+        if (existing) {
+          await db
+            .update(usageStats)
+            .set({
               transformationsPosted: sql`${usageStats.transformationsPosted} - 1`,
-            },
-          });
+            })
+            .where(
+              and(
+                eq(usageStats.userId, userId),
+                eq(usageStats.month, startOfMonth),
+              ),
+            );
+        }
+        // If no row exists, the original posting was in a different month, so skip
       }
 
       return updated;
