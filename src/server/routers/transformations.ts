@@ -418,6 +418,7 @@ export const transformationsRouter = router({
 
       const { seed, transformation } = existing;
       const platform = transformation.platform;
+      const wasPosted = !!transformation.postedAt;
 
       const toneInstruction = toneDescriptions[tone];
       const lengthInstruction = lengthDescriptions[length];
@@ -489,6 +490,29 @@ export const transformationsRouter = router({
         })
         .where(eq(transformations.id, id))
         .returning();
+
+      // If the transformation was previously posted, decrement the usage stats
+      if (wasPosted) {
+        const userId = ctx.session.user.id;
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        await db
+          .insert(usageStats)
+          .values({
+            userId,
+            month: startOfMonth,
+            seedsCreated: 0,
+            transformationsCreated: 0,
+            transformationsPosted: -1,
+          })
+          .onConflictDoUpdate({
+            target: [usageStats.userId, usageStats.month],
+            set: {
+              transformationsPosted: sql`${usageStats.transformationsPosted} - 1`,
+            },
+          });
+      }
 
       return updated;
     }),

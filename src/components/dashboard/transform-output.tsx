@@ -371,7 +371,6 @@ export function TransformOutput({
         </div>
       )}
 
-      {/* Expanded View Modal */}
       <AnimatePresence>
         {expandedTransformation && (
           <motion.div
@@ -400,7 +399,6 @@ export function TransformOutput({
 
                 return (
                   <>
-                    {/* Header */}
                     <div className="flex items-center justify-between border-b border-border p-4">
                       <div className="flex items-center gap-3">
                         <PlatformBadge platform={platform} />
@@ -429,14 +427,12 @@ export function TransformOutput({
                       </Button>
                     </div>
 
-                    {/* Content */}
                     <div className="overflow-auto max-h-[60vh] p-6">
                       <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
                         {expandedTransformation.content}
                       </pre>
                     </div>
 
-                    {/* Footer */}
                     <div className="flex items-center justify-end gap-2 border-t border-border p-4">
                       {onRegenerate && (
                         <Button

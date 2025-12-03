@@ -104,7 +104,6 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
         </div>
       </div>
 
-      {/* Search and Filters */}
       {!showEmptyState && (
         <div className="mb-6 space-y-3">
           <div className="flex gap-2">
@@ -131,7 +130,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
               size="default"
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
-                "gap-2",
+                "gap-2 h-10 border transition-all",
                 hasActiveFilters && "border-primary/50 text-primary",
               )}
             >
@@ -140,9 +139,11 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
               {hasActiveFilters && (
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
                   {
-                    [statusFilter !== "all", platformFilter !== "all"].filter(
-                      Boolean,
-                    ).length
+                    [
+                      !!searchQuery,
+                      statusFilter !== "all",
+                      platformFilter !== "all",
+                    ].filter(Boolean).length
                   }
                 </span>
               )}
@@ -159,7 +160,6 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                 className="overflow-hidden"
               >
                 <div className="flex flex-wrap gap-4 rounded-lg border border-border bg-secondary/30 p-4">
-                  {/* Platform Filter */}
                   <div className="space-y-2">
                     <span className="block text-xs font-medium text-muted-foreground">
                       Platform
@@ -197,7 +197,6 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                     </div>
                   </div>
 
-                  {/* Status Filter */}
                   <div className="space-y-2">
                     <span className="block text-xs font-medium text-muted-foreground">
                       Status
@@ -227,7 +226,6 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                     </div>
                   </div>
 
-                  {/* Clear Filters */}
                   {hasActiveFilters && (
                     <div className="flex items-end">
                       <Button
