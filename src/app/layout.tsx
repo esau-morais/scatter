@@ -4,6 +4,7 @@ import { TRPCReactProvider } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 import type { ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +39,10 @@ export default function RootLayout({
       <body
         className={cn("antialiased", geistSans.variable, geistMono.variable)}
       >
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          {children}
+          <Toaster position="top-center" />
+        </TRPCReactProvider>
       </body>
     </html>
   );

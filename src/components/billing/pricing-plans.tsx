@@ -8,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckoutButton } from "./checkout-button";
 import { PLAN_IDS } from "@/lib/polar/plans";
+import { CheckoutButton } from "./checkout-button";
 
 const plans = [
   {

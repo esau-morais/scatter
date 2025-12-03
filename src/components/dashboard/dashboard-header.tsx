@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, History, Plus, Sparkles } from "lucide-react";
+import { History, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";

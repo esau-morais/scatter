@@ -43,6 +43,12 @@
   --radius-xl: calc(var(--radius) + 4px);
   --color-coral: var(--coral);
   --color-coral-foreground: var(--coral-foreground);
+  --color-x-blue: var(--x-blue);
+  --color-linkedin-blue: var(--linkedin-blue);
+  --color-tiktok-pink: var(--tiktok-pink);
+  --color-blog-emerald: var(--blog-emerald);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
   --animate-gradient: gradient-shift 4s ease infinite;
 
@@ -92,6 +98,14 @@
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(0.72 0.19 30);
+
+  /* Platform-specific colors */
+  --x-blue: oklch(0.55 0.2 230);
+  --linkedin-blue: oklch(0.45 0.15 235);
+  --tiktok-pink: oklch(0.65 0.25 350);
+  --blog-emerald: oklch(0.6 0.16 160);
+  --success: oklch(0.6 0.16 160);
+  --warning: oklch(0.75 0.18 75);
 }
 
 @layer base {

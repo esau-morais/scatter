@@ -1,12 +1,14 @@
 import {
   boolean,
+  integer,
   pgEnum,
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { user } from "@/lib/auth/auth-schema";
+import { users } from "@/lib/auth/auth-schema";
 
 export const platformEnum = pgEnum("platform", [
   "x",
@@ -19,7 +21,7 @@ export const seeds = pgTable("seeds", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
     .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "cascade" }),
   title: text("title"),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -47,6 +49,19 @@ export const waitlist = pgTable("waitlist", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const usageStats = pgTable("usage_stats", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  month: timestamp("month").notNull(),
+  seedsCreated: integer("seeds_created").notNull().default(0),
+  transformationsCreated: integer("transformations_created").notNull().default(0),
+  transformationsPosted: integer("transformations_posted").notNull().default(0),
+}, (table) => [
+  uniqueIndex("usage_stats_user_month_idx").on(table.userId, table.month),
+]);
+
 export type Seed = typeof seeds.$inferSelect;
 export type NewSeed = typeof seeds.$inferInsert;
 
@@ -55,3 +70,6 @@ export type NewTransformation = typeof transformations.$inferInsert;
 
 export type Waitlist = typeof waitlist.$inferSelect;
 export type NewWaitlist = typeof waitlist.$inferInsert;
+
+export type UsageStats = typeof usageStats.$inferSelect;
+export type NewUsageStats = typeof usageStats.$inferInsert;

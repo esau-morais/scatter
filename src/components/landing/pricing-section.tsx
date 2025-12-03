@@ -2,14 +2,14 @@
 
 import { Check } from "lucide-react";
 import { motion } from "motion/react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { authClient } from "@/lib/auth/auth-client";
-import { cn } from "@/lib/utils";
 import { PLAN_IDS } from "@/lib/polar/plans";
+import { cn } from "@/lib/utils";
 
 const pricing = [
   {
@@ -57,17 +57,22 @@ const pricing = [
 ];
 
 export function PricingSection() {
-  const router = useRouter();
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session?.session;
 
-  const handleFreePlan = () => {
-    router.push("/login");
-  };
-
-  const handlePaidPlan = () => {
-    router.push("/login");
-  };
+  const PlanLink = (plan: (typeof pricing)[number]) => (
+    <Link
+      className={cn(
+        "w-full",
+        buttonVariants({
+          variant: plan.highlighted ? "default" : "outline",
+        }),
+      )}
+      href={isAuthenticated ? "/dashboard" : "/login"}
+    >
+      {plan.cta}
+    </Link>
+  );
 
   return (
     <section className="relative py-24 z-10">
@@ -134,26 +139,10 @@ export function PricingSection() {
                     </li>
                   ))}
                 </ul>
-                {plan.planId ? (
-                  isAuthenticated ? (
-                    <CheckoutButton planId={plan.planId} planName={plan.name} />
-                  ) : (
-                    <Button
-                      className="w-full"
-                      variant={plan.highlighted ? "default" : "outline"}
-                      onClick={handlePaidPlan}
-                    >
-                      {plan.cta}
-                    </Button>
-                  )
+                {plan.planId && isAuthenticated ? (
+                  <CheckoutButton planId={plan.planId} planName={plan.name} />
                 ) : (
-                  <Button
-                    className="w-full"
-                    variant={plan.highlighted ? "default" : "outline"}
-                    onClick={handleFreePlan}
-                  >
-                    {plan.cta}
-                  </Button>
+                  <PlanLink {...plan} />
                 )}
               </Card>
             </motion.div>

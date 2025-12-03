@@ -3,10 +3,10 @@ import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
-import { user } from "@/lib/auth/auth-schema";
+import { users } from "@/lib/auth/auth-schema";
 import { polar } from "@/lib/polar";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
 
@@ -16,9 +16,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const [currentUser] = await db
-      .select({ polarCustomerId: user.polarCustomerId })
-      .from(user)
-      .where(eq(user.id, session.user.id))
+      .select({ polarCustomerId: users.polarCustomerId })
+      .from(users)
+      .where(eq(users.id, session.user.id))
       .limit(1);
 
     if (!currentUser?.polarCustomerId) {
