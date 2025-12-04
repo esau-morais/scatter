@@ -1,7 +1,7 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { seeds, transformations } from "@/db/schema";
+import { seeds } from "@/db/schema";
 import { protectedProcedure, router } from "../trpc";
 
 export const seedsRouter = router({
@@ -26,32 +26,18 @@ export const seedsRouter = router({
     }),
 
   list: protectedProcedure.query(async ({ ctx }) => {
-    const userSeeds = await db
-      .select()
-      .from(seeds)
-      .where(eq(seeds.userId, ctx.session.user.id))
-      .orderBy(desc(seeds.createdAt));
-
-    if (userSeeds.length === 0) {
-      return [];
-    }
-
-    const seedIds = userSeeds.map((s) => s.id);
-    const userTransformations = await db
-      .select()
-      .from(transformations)
-      .where(inArray(transformations.seedId, seedIds));
-
-    const results = userSeeds.map((seed) => {
-      return {
-        seed: seed,
-        transformations: userTransformations.filter(
-          (t) => t.seedId === seed.id,
-        ),
-      };
+    const results = await db.query.seeds.findMany({
+      where: eq(seeds.userId, ctx.session.user.id),
+      orderBy: desc(seeds.createdAt),
+      with: {
+        transformations: true,
+      },
     });
 
-    return results;
+    return results.map(({ transformations, ...seed }) => ({
+      seed,
+      transformations,
+    }));
   }),
 
   getById: protectedProcedure
@@ -72,39 +58,39 @@ export const seedsRouter = router({
   getWithTransformations: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
-      const [seed] = await db
-        .select()
-        .from(seeds)
-        .where(eq(seeds.id, input.id));
+      const seed = await db.query.seeds.findFirst({
+        where: and(
+          eq(seeds.id, input.id),
+          eq(seeds.userId, ctx.session.user.id),
+        ),
+        with: {
+          transformations: true,
+        },
+      });
 
-      if (!seed || seed.userId !== ctx.session.user.id) {
+      if (!seed) {
         throw new Error("Seed not found");
       }
 
-      const seedTransformations = await db
-        .select()
-        .from(transformations)
-        .where(eq(transformations.seedId, seed.id));
-
       return {
         seed,
-        transformations: seedTransformations,
+        transformations: seed.transformations,
       };
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const [seed] = await db
-        .select()
-        .from(seeds)
-        .where(eq(seeds.id, input.id));
+      const [deleted] = await db
+        .delete(seeds)
+        .where(
+          and(eq(seeds.id, input.id), eq(seeds.userId, ctx.session.user.id)),
+        )
+        .returning();
 
-      if (!seed || seed.userId !== ctx.session.user.id) {
+      if (!deleted) {
         throw new Error("Seed not found");
       }
-
-      await db.delete(seeds).where(eq(seeds.id, input.id));
 
       return { success: true };
     }),

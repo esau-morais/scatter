@@ -47,10 +47,7 @@ export function DashboardClient() {
           ...currentHistory,
         ]);
         queryClient.invalidateQueries(
-          trpc.transformations.getStats.queryOptions(),
-        );
-        queryClient.invalidateQueries(
-          trpc.transformations.getUsage.queryOptions(),
+          trpc.transformations.getDashboardData.queryOptions(),
         );
       },
       onError: (error) => {
@@ -81,9 +78,9 @@ export function DashboardClient() {
         });
 
         queryClient.setQueryData(seedsListOptions.queryKey, updatedHistory);
-        queryClient.invalidateQueries({
-          queryKey: trpc.transformations.getStats.queryKey(),
-        });
+        queryClient.invalidateQueries(
+          trpc.transformations.getDashboardData.queryOptions(),
+        );
 
         setLatestGeneration((prev) => {
           if (!prev || prev.seed.id !== updatedTransformation.seedId)
@@ -110,9 +107,9 @@ export function DashboardClient() {
           seedsListOptions.queryKey,
           currentHistory.filter((item) => item.seed.id !== variables.id),
         );
-        queryClient.invalidateQueries({
-          queryKey: trpc.transformations.getStats.queryKey(),
-        });
+        queryClient.invalidateQueries(
+          trpc.transformations.getDashboardData.queryOptions(),
+        );
         if (latestGeneration?.seed.id === variables.id) {
           setLatestGeneration(null);
         }
@@ -144,6 +141,9 @@ export function DashboardClient() {
         });
 
         queryClient.setQueryData(seedsListOptions.queryKey, updatedHistory);
+        queryClient.invalidateQueries(
+          trpc.transformations.getDashboardData.queryOptions(),
+        );
 
         setLatestGeneration((prev) => {
           if (!prev || prev.seed.id !== updatedTransformation.seedId)

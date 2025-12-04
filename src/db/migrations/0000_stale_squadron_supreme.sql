@@ -72,8 +72,6 @@ CREATE TABLE "users" (
 	"plan" "plan" DEFAULT 'free' NOT NULL,
 	"polar_customer_id" text,
 	"polar_subscription_id" text,
-	"usage_count" integer DEFAULT 0 NOT NULL,
-	"usage_reset_at" timestamp DEFAULT now() NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")

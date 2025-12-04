@@ -9,7 +9,7 @@ export const platformConfig = {
     color: "text-x-blue",
     bgColor: "bg-x-blue/10",
     borderColor: "border-x-blue/20",
-    maxChars: 280,
+    maxChars: 3500, // Max for 12-tweet thread (12 * 280 + numbering overhead)
   },
   linkedin: {
     name: "LinkedIn",

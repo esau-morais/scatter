@@ -105,7 +105,9 @@ interface SeedInputProps {
 
 export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
   const [showOptions, setShowOptions] = useState(false);
-  const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const isMac =
+    typeof navigator !== "undefined" &&
+    /Mac|iPhone|iPad|iPod/.test(navigator.platform);
   const modKey = isMac ? "⌘" : "Ctrl";
 
   const form = useForm<SeedFormValues>({

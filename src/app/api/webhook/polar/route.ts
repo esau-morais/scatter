@@ -11,7 +11,7 @@ const getPlanFromId = (planId: string): "creator" | "pro" | "free" => {
 };
 
 export const POST = Webhooks({
-  webhookSecret: process.env.POLAR_WEBHOOK_SECRET ?? "",
+  webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
   onPayload: async (payload) => {
     try {
       switch (payload.type) {

@@ -1,11 +1,16 @@
 import { google } from "@ai-sdk/google";
 import { TRPCError } from "@trpc/server";
 import { generateObject } from "ai";
-import { and, count, eq, gte, isNotNull, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { seeds, transformations, usageStats } from "@/db/schema";
 import { users } from "@/lib/auth/auth-schema";
+import {
+  getCurrentMonthUsage,
+  getStartOfMonth,
+  USAGE_LIMITS,
+} from "../lib/usage";
 import { protectedProcedure, router } from "../trpc";
 
 const platformEnum = z.enum(["x", "linkedin", "tiktok", "blog"]);
@@ -26,76 +31,39 @@ const lengthDescriptions: Record<string, string> = {
   long: "Be thorough and detailed. Provide comprehensive coverage of the topic.",
 };
 
-const limits: Record<string, number | null> = {
-  free: 10,
-  creator: 100,
-  pro: null, // unlimited
-};
-
 export const transformationsRouter = router({
-  getStats: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const [stats] = await db
-      .select()
-      .from(usageStats)
-      .where(
-        and(eq(usageStats.userId, userId), eq(usageStats.month, startOfMonth)),
-      );
-
-    const totalTransformations = stats?.transformationsCreated ?? 0;
-    const postedTransformations = stats?.transformationsPosted ?? 0;
-    const successRate =
-      totalTransformations > 0
-        ? Math.round((postedTransformations / totalTransformations) * 100)
-        : 0;
-
-    return {
-      seedsCreated: stats?.seedsCreated ?? 0,
-      totalTransformations,
-      successRate,
-    };
-  }),
-
-  getUsage: protectedProcedure.query(async ({ ctx }) => {
+  getDashboardData: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const [currentUser] = await db
-      .select({
-        plan: users.plan,
-        usageCount: users.usageCount,
-        usageResetAt: users.usageResetAt,
-      })
+    const [user] = await db
+      .select({ plan: users.plan })
       .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+      .where(eq(users.id, userId));
 
-    if (!currentUser) {
+    if (!user) {
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    // Reset usage if we're in a new month
-    let currentUsage = currentUser.usageCount;
-    if (currentUser.usageResetAt < startOfMonth) {
-      await db
-        .update(users)
-        .set({ usageCount: 0, usageResetAt: startOfMonth })
-        .where(eq(users.id, userId));
-      currentUsage = 0;
-    }
-
-    const limit = limits[currentUser.plan];
+    const stats = await getCurrentMonthUsage(userId);
+    const limit = USAGE_LIMITS[user.plan];
+    const successRate =
+      stats.transformationsCreated > 0
+        ? Math.round(
+            (stats.transformationsPosted / stats.transformationsCreated) * 100,
+          )
+        : 0;
 
     return {
-      currentUsage,
+      seedsCreated: stats.seedsCreated,
+      totalTransformations: stats.transformationsCreated,
+      successRate,
+      currentUsage: stats.transformationsCreated,
       limit,
-      remaining: limit !== null ? Math.max(0, limit - currentUsage) : null,
-      plan: currentUser.plan,
+      remaining:
+        limit !== null
+          ? Math.max(0, limit - stats.transformationsCreated)
+          : null,
+      plan: user.plan,
     };
   }),
 
@@ -117,39 +85,25 @@ export const transformationsRouter = router({
       const { content, platforms, tone, length, persona } = input;
       const userId = ctx.session.user.id;
 
-      const [currentUser] = await db
-        .select({
-          plan: users.plan,
-          usageCount: users.usageCount,
-          usageResetAt: users.usageResetAt,
-        })
+      const [user] = await db
+        .select({ plan: users.plan })
         .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
+        .where(eq(users.id, userId));
 
-      if (!currentUser) {
+      if (!user) {
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       }
 
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const stats = await getCurrentMonthUsage(userId);
+      const limit = USAGE_LIMITS[user.plan];
 
-      // Reset usage if we're in a new month
-      let currentUsage = currentUser.usageCount;
-      if (currentUser.usageResetAt < startOfMonth) {
-        await db
-          .update(users)
-          .set({ usageCount: 0, usageResetAt: startOfMonth })
-          .where(eq(users.id, userId));
-        currentUsage = 0;
-      }
-
-      const limit = limits[currentUser.plan];
-      // Check if adding new transformations would exceed limit
-      if (limit !== null && currentUsage + platforms.length > limit) {
+      if (
+        limit !== null &&
+        stats.transformationsCreated + platforms.length > limit
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: `Usage limit would be exceeded. You've used ${currentUsage}/${limit} transformations this month. Upgrade your plan to continue.`,
+          message: `Usage limit would be exceeded. You've used ${stats.transformationsCreated}/${limit} transformations this month. Upgrade your plan to continue.`,
         });
       }
 
@@ -246,16 +200,10 @@ export const transformationsRouter = router({
           .returning();
 
         await tx
-          .update(users)
-          .set({ usageCount: currentUsage + savedTransformations.length })
-          .where(eq(users.id, userId));
-
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        await tx
           .insert(usageStats)
           .values({
             userId,
-            month: startOfMonth,
+            month: getStartOfMonth(),
             seedsCreated: 1,
             transformationsCreated: savedTransformations.length,
             transformationsPosted: 0,
@@ -314,41 +262,38 @@ export const transformationsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const [transformation] = await db
-        .select({
-          transformation: transformations,
-          seed: seeds,
-        })
-        .from(transformations)
-        .innerJoin(seeds, eq(transformations.seedId, seeds.id))
-        .where(eq(transformations.id, input.id));
+      const transformation = await db.query.transformations.findFirst({
+        where: eq(transformations.id, input.id),
+        with: {
+          seed: true,
+        },
+      });
 
       if (!transformation || transformation.seed.userId !== userId) {
         throw new Error("Transformation not found");
       }
 
-      const wasPosted = !!transformation.transformation.postedAt;
+      const wasPosted = !!transformation.postedAt;
       const willBePosted = input.posted;
 
-      const [updated] = await db
-        .update(transformations)
-        .set({
-          postedAt: willBePosted ? new Date() : null,
-        })
-        .where(eq(transformations.id, input.id))
-        .returning();
+      const updated = await db.transaction(async (tx) => {
+        const [result] = await tx
+          .update(transformations)
+          .set({
+            postedAt: willBePosted ? new Date() : null,
+          })
+          .where(eq(transformations.id, input.id))
+          .returning();
 
-      if (wasPosted !== willBePosted) {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const delta = willBePosted ? 1 : -1;
+        if (wasPosted !== willBePosted) {
+          const delta = willBePosted ? 1 : -1;
+          const month = getStartOfMonth();
 
-        if (delta > 0) {
-          await db
+          await tx
             .insert(usageStats)
             .values({
               userId,
-              month: startOfMonth,
+              month,
               seedsCreated: 0,
               transformationsCreated: 0,
               transformationsPosted: delta,
@@ -356,37 +301,13 @@ export const transformationsRouter = router({
             .onConflictDoUpdate({
               target: [usageStats.userId, usageStats.month],
               set: {
-                transformationsPosted: sql`${usageStats.transformationsPosted} + ${delta}`,
+                transformationsPosted: sql`GREATEST(0, ${usageStats.transformationsPosted} + ${delta})`,
               },
             });
-        } else {
-          const [existing] = await db
-            .select()
-            .from(usageStats)
-            .where(
-              and(
-                eq(usageStats.userId, userId),
-                eq(usageStats.month, startOfMonth),
-              ),
-            )
-            .limit(1);
-
-          if (existing) {
-            await db
-              .update(usageStats)
-              .set({
-                transformationsPosted: sql`${usageStats.transformationsPosted} + ${delta}`,
-              })
-              .where(
-                and(
-                  eq(usageStats.userId, userId),
-                  eq(usageStats.month, startOfMonth),
-                ),
-              );
-          }
-          // If no row exists, the original posting was in a different month, so skip
         }
-      }
+
+        return result;
+      });
 
       return updated;
     }),
@@ -394,19 +315,14 @@ export const transformationsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const [transformation] = await db
-        .select({
-          transformation: transformations,
-          seed: seeds,
-        })
-        .from(transformations)
-        .innerJoin(seeds, eq(transformations.seedId, seeds.id))
-        .where(eq(transformations.id, input.id));
+      const transformation = await db.query.transformations.findFirst({
+        where: eq(transformations.id, input.id),
+        with: {
+          seed: true,
+        },
+      });
 
-      if (
-        !transformation ||
-        transformation.seed.userId !== ctx.session.user.id
-      ) {
+      if (!transformation || transformation.seed.userId !== ctx.session.user.id) {
         throw new Error("Transformation not found");
       }
 
@@ -426,15 +342,33 @@ export const transformationsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, tone, length, persona } = input;
+      const userId = ctx.session.user.id;
 
-      const [existing] = await db
-        .select({
-          transformation: transformations,
-          seed: seeds,
-        })
-        .from(transformations)
-        .innerJoin(seeds, eq(transformations.seedId, seeds.id))
-        .where(eq(transformations.id, id));
+      const [user] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, userId));
+
+      if (!user) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+
+      const stats = await getCurrentMonthUsage(userId);
+      const limit = USAGE_LIMITS[user.plan];
+
+      if (limit !== null && stats.transformationsCreated >= limit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `Usage limit reached. You've used ${stats.transformationsCreated}/${limit} transformations this month. Upgrade your plan to continue.`,
+        });
+      }
+
+      const existing = await db.query.transformations.findFirst({
+        where: eq(transformations.id, id),
+        with: {
+          seed: true,
+        },
+      });
 
       if (!existing || existing.seed.userId !== ctx.session.user.id) {
         throw new TRPCError({
@@ -443,9 +377,9 @@ export const transformationsRouter = router({
         });
       }
 
-      const { seed, transformation } = existing;
-      const platform = transformation.platform;
-      const wasPosted = !!transformation.postedAt;
+      const { seed } = existing;
+      const platform = existing.platform;
+      const wasPosted = !!existing.postedAt;
 
       const toneInstruction = toneDescriptions[tone];
       const lengthInstruction = lengthDescriptions[length];
@@ -508,49 +442,38 @@ export const transformationsRouter = router({
           Generate fresh, unique content that's different from before but maintains the same core message.`,
       });
 
-      const [updated] = await db
-        .update(transformations)
-        .set({
-          content: generated.content,
-          postedAt: null, // Reset posted status on regenerate
-        })
-        .where(eq(transformations.id, id))
-        .returning();
+      const updated = await db.transaction(async (tx) => {
+        const [result] = await tx
+          .update(transformations)
+          .set({
+            content: generated.content,
+            postedAt: null,
+          })
+          .where(eq(transformations.id, id))
+          .returning();
 
-      // If the transformation was previously posted, decrement the usage stats
-      // Only decrement if a row exists for the current month (to avoid negative values
-      // when the original posting was in a different month)
-      if (wasPosted) {
-        const userId = ctx.session.user.id;
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const month = getStartOfMonth();
+        const postedDelta = wasPosted ? -1 : 0;
 
-        const [existing] = await db
-          .select()
-          .from(usageStats)
-          .where(
-            and(
-              eq(usageStats.userId, userId),
-              eq(usageStats.month, startOfMonth),
-            ),
-          )
-          .limit(1);
+        await tx
+          .insert(usageStats)
+          .values({
+            userId,
+            month,
+            seedsCreated: 0,
+            transformationsCreated: 1,
+            transformationsPosted: postedDelta,
+          })
+          .onConflictDoUpdate({
+            target: [usageStats.userId, usageStats.month],
+            set: {
+              transformationsCreated: sql`${usageStats.transformationsCreated} + 1`,
+              transformationsPosted: sql`GREATEST(0, ${usageStats.transformationsPosted} + ${postedDelta})`,
+            },
+          });
 
-        if (existing) {
-          await db
-            .update(usageStats)
-            .set({
-              transformationsPosted: sql`${usageStats.transformationsPosted} - 1`,
-            })
-            .where(
-              and(
-                eq(usageStats.userId, userId),
-                eq(usageStats.month, startOfMonth),
-              ),
-            );
-        }
-        // If no row exists, the original posting was in a different month, so skip
-      }
+        return result;
+      });
 
       return updated;
     }),

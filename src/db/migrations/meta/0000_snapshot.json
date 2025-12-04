@@ -1,5 +1,5 @@
 {
-  "id": "cb5ca70b-d7aa-4571-a509-789366f2d726",
+  "id": "27af4a11-56e0-44d3-b501-41642b16a3ef",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -549,20 +549,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "usage_count": {
-          "name": "usage_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "usage_reset_at": {
-          "name": "usage_reset_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         },
         "created_at": {
           "name": "created_at",

@@ -9,40 +9,37 @@ import { cn } from "@/lib/utils";
 
 export function StatsCards() {
   const trpc = useTRPC();
-  const { data: statsData } = useQuery(
-    trpc.transformations.getStats.queryOptions(),
-  );
-  const { data: usageData, isLoading: isUsageDataLoading } = useQuery(
-    trpc.transformations.getUsage.queryOptions(),
+  const { data, isLoading } = useQuery(
+    trpc.transformations.getDashboardData.queryOptions(),
   );
 
-  const hasData = (statsData?.totalTransformations ?? 0) > 0;
-  const usageSubtitle = isUsageDataLoading
+  const hasData = (data?.totalTransformations ?? 0) > 0;
+  const usageSubtitle = isLoading
     ? "Loading..."
-    : usageData
-      ? usageData.limit === null
+    : data
+      ? data.limit === null
         ? "Unlimited this month"
-        : usageData.remaining === null
-          ? `${usageData.limit} included in your plan`
-          : `${usageData.remaining} remaining this month`
+        : data.remaining === null
+          ? `${data.limit} included in your plan`
+          : `${data.remaining} remaining this month`
       : "";
 
   const stats = [
     {
       label: "Transformations",
-      value: statsData?.totalTransformations ?? 0,
+      value: data?.totalTransformations ?? 0,
       emptyValue: "0",
       subtitle: usageSubtitle,
       emptySubtitle:
-        usageData?.limit === null
+        data?.limit === null
           ? "Unlimited"
-          : `${usageData?.limit ?? "—"} included in your plan`,
+          : `${data?.limit ?? "—"} included in your plan`,
       icon: Sparkles,
       color: "text-primary",
     },
     {
       label: "Seeds Created",
-      value: statsData?.seedsCreated ?? 0,
+      value: data?.seedsCreated ?? 0,
       emptyValue: "0",
       subtitle: "This month",
       emptySubtitle: "Start transforming to track",
@@ -51,7 +48,7 @@ export function StatsCards() {
     },
     {
       label: "Success Rate",
-      value: `${statsData?.successRate ?? 0}%`,
+      value: `${data?.successRate ?? 0}%`,
       emptyValue: "--",
       subtitle: "Posted to platforms",
       emptySubtitle: "No data yet",
