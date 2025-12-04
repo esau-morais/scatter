@@ -107,7 +107,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
   const [showOptions, setShowOptions] = useState(false);
   const isMac =
     typeof navigator !== "undefined" &&
-    /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+    /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
   const modKey = isMac ? "⌘" : "Ctrl";
 
   const form = useForm<SeedFormValues>({
@@ -131,13 +131,14 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
 
   const onSubmit = useCallback(
     (values: SeedFormValues) => {
+      if (isGenerating) return;
       onGenerate?.(values.seed, values.platforms, {
         tone: values.tone,
         length: values.length,
         persona: values.persona,
       });
     },
-    [onGenerate],
+    [onGenerate, isGenerating],
   );
 
   useEffect(() => {
@@ -174,6 +175,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                   <Textarea
                     placeholder="Drop your idea here... It can be a concept, voice note transcript, or rough draft. We'll transform it into platform-optimized content."
                     className="min-h-60 resize-none border-border bg-secondary/50 font-mono text-sm leading-relaxed transition-all focus:bg-secondary/70"
+                    enterKeyHint="send"
                     {...field}
                   />
                 </FormControl>
@@ -412,7 +414,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
             <Button
               type="submit"
               className="w-full shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)]"
-              disabled={!seed || isGenerating || selectedPlatforms.length === 0}
+              disabled={!form.formState.isValid || isGenerating}
             >
               {isGenerating ? (
                 <>
@@ -436,7 +438,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                 </>
               )}
             </Button>
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="hidden text-center text-xs text-muted-foreground md:block">
               Press{" "}
               <KbdGroup>
                 <Kbd>{modKey}</Kbd> <span>+</span> <Kbd>Enter</Kbd>{" "}
