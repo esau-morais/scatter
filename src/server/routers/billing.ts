@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { user } from "@/lib/auth/auth-schema";
+import { users } from "@/lib/auth/auth-schema";
 import { polar } from "@/lib/polar";
 import { protectedProcedure, router } from "../trpc";
 
@@ -10,12 +10,12 @@ export const billingRouter = router({
 
     const [currentUser] = await db
       .select({
-        plan: user.plan,
-        polarCustomerId: user.polarCustomerId,
-        polarSubscriptionId: user.polarSubscriptionId,
+        plan: users.plan,
+        polarCustomerId: users.polarCustomerId,
+        polarSubscriptionId: users.polarSubscriptionId,
       })
-      .from(user)
-      .where(eq(user.id, userId))
+      .from(users)
+      .where(eq(users.id, userId))
       .limit(1);
 
     if (!currentUser) {

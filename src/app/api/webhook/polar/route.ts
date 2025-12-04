@@ -1,7 +1,7 @@
 import { Webhooks } from "@polar-sh/nextjs";
 import { eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { user } from "@/lib/auth/auth-schema";
+import { users } from "@/lib/auth/auth-schema";
 import { PLAN_IDS } from "@/lib/polar/plans";
 
 const getPlanFromId = (planId: string): "creator" | "pro" | "free" => {
@@ -27,7 +27,7 @@ export const POST = Webhooks({
 
           // Match by polarCustomerId first, then fallback to case-insensitive email
           const result = await db
-            .update(user)
+            .update(users)
             .set({
               plan: plan,
               polarCustomerId: customer.id,
@@ -35,8 +35,8 @@ export const POST = Webhooks({
             })
             .where(
               or(
-                eq(user.polarCustomerId, customer.id),
-                sql`LOWER(${user.email}) = LOWER(${customer.email})`,
+                eq(users.polarCustomerId, customer.id),
+                sql`LOWER(${users.email}) = LOWER(${customer.email})`,
               ),
             );
 
@@ -55,18 +55,20 @@ export const POST = Webhooks({
           const subscription = payload.data;
           const customer = subscription.customer;
 
-          console.log(`Processing subscription.canceled for customer ${customer.id}`);
+          console.log(
+            `Processing subscription.canceled for customer ${customer.id}`,
+          );
 
           const result = await db
-            .update(user)
+            .update(users)
             .set({
               plan: "free",
               polarSubscriptionId: null,
             })
             .where(
               or(
-                eq(user.polarCustomerId, customer.id),
-                sql`LOWER(${user.email}) = LOWER(${customer.email})`,
+                eq(users.polarCustomerId, customer.id),
+                sql`LOWER(${users.email}) = LOWER(${customer.email})`,
               ),
             );
 

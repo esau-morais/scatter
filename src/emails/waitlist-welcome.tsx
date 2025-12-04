@@ -46,7 +46,6 @@ export const WaitlistWelcome = ({ email }: WaitlistWelcomeProps) => (
     <Tailwind config={config}>
       <Body className="m-0 bg-slate-900 p-0 font-sans">
         <Container className="mx-auto max-w-[520px] px-4 py-10">
-          {/* Header with Logo */}
           <Section className="mb-8 text-center">
             <table cellPadding="0" cellSpacing="0" style={{ margin: "0 auto" }}>
               <tr>
@@ -69,7 +68,6 @@ export const WaitlistWelcome = ({ email }: WaitlistWelcomeProps) => (
             </Text>
           </Section>
 
-          {/* Main Card */}
           <Section
             className="rounded-2xl px-8 py-10"
             style={{
@@ -77,7 +75,6 @@ export const WaitlistWelcome = ({ email }: WaitlistWelcomeProps) => (
               border: "1px solid #252529",
             }}
           >
-            {/* Status Badge */}
             <table
               cellPadding="0"
               cellSpacing="0"
@@ -129,7 +126,6 @@ export const WaitlistWelcome = ({ email }: WaitlistWelcomeProps) => (
             </Text>
           </Section>
 
-          {/* Footer */}
           <Section className="mt-8 text-center">
             <Text className="m-0 mb-4 text-xs text-slate-400">
               © 2025 Scatter · Write once, distribute everywhere.
