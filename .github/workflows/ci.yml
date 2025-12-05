@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-type-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run linter
+        run: bun run lint
+
+      - name: Type check
+        run: bunx tsc --noEmit
+
+      - name: Build
+        run: bun run build
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/test
+          BETTER_AUTH_SECRET: test-secret-key-for-ci-builds-only
+          BETTER_AUTH_URL: http://localhost:3000
+          SKIP_ENV_VALIDATION: true
+          POLAR_ACCESS_TOKEN: polar_test_access_token
+          RESEND_API_KEY: re_test_api_key

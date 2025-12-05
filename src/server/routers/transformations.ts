@@ -322,7 +322,10 @@ export const transformationsRouter = router({
         },
       });
 
-      if (!transformation || transformation.seed.userId !== ctx.session.user.id) {
+      if (
+        !transformation ||
+        transformation.seed.userId !== ctx.session.user.id
+      ) {
         throw new Error("Transformation not found");
       }
 
