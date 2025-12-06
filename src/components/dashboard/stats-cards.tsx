@@ -35,7 +35,6 @@ export function StatsCards() {
           ? "Unlimited"
           : `${data?.limit ?? "—"} included in your plan`,
       icon: Sparkles,
-      color: "text-primary",
     },
     {
       label: "Seeds Created",
@@ -44,7 +43,6 @@ export function StatsCards() {
       subtitle: "This month",
       emptySubtitle: "Start transforming to track",
       icon: FileText,
-      color: "text-blog-emerald",
     },
     {
       label: "Success Rate",
@@ -53,7 +51,6 @@ export function StatsCards() {
       subtitle: "Posted to platforms",
       emptySubtitle: "No data yet",
       icon: TrendingUp,
-      color: "text-linkedin-blue",
     },
   ];
 
@@ -68,33 +65,54 @@ export function StatsCards() {
         >
           <Card
             className={cn(
-              "border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border",
-              !hasData && "opacity-60",
+              "border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:shadow-lg",
+              !hasData && "border-dashed",
             )}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {stat.label}
+                </p>
                 <p
                   className={cn(
-                    "mt-2 text-3xl font-bold",
-                    !hasData && "text-muted-foreground",
+                    "mt-2 text-3xl font-bold tabular-nums tracking-tight",
+                    hasData ? "text-foreground" : "text-muted-foreground/50",
                   )}
                 >
                   {hasData ? stat.value : stat.emptyValue}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p
+                  className={cn(
+                    "mt-1 text-xs",
+                    hasData
+                      ? "text-muted-foreground"
+                      : "text-muted-foreground/70",
+                  )}
+                >
                   {hasData ? stat.subtitle : stat.emptySubtitle}
                 </p>
               </div>
-              <div
+              <motion.div
                 className={cn(
                   "flex h-10 w-10 items-center justify-center rounded-lg bg-secondary transition-colors",
-                  hasData ? stat.color : "text-muted-foreground",
+                  !hasData && "bg-secondary/50 text-muted-foreground/40",
                 )}
+                animate={
+                  !hasData
+                    ? {
+                        scale: [1, 1.1, 1],
+                      }
+                    : {}
+                }
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                }}
               >
                 <stat.icon className="h-5 w-5" />
-              </div>
+              </motion.div>
             </div>
           </Card>
         </motion.div>

@@ -2,12 +2,13 @@
 
 import {
   Check,
+  X as Close,
   Copy,
   Expand,
+  FileText,
   RefreshCw,
   Send,
   Sparkles,
-  X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
@@ -23,6 +24,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Transformation } from "@/db/schema";
 import { cn } from "@/lib/utils";
+import { Linkedin, Tiktok } from "../ui/svgs";
+import { X } from "../ui/svgs/x";
 
 interface TransformOutputProps {
   transformations: Transformation[];
@@ -189,25 +192,56 @@ export function TransformOutput({
       </div>
 
       {!hasContent ? (
-        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-secondary/30 p-8 text-center">
+        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-secondary/30 via-secondary/20 to-background/50 p-8 text-center">
           <motion.div
             animate={{
               y: [0, -10, 0],
+              scale: [1, 1.05, 1],
             }}
             transition={{
-              duration: 2,
+              duration: 3,
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
             }}
-            className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5"
+            className="relative mb-6"
           >
-            <Sparkles className="h-8 w-8 text-primary" />
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" />
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/30 to-primary/10 ring-4 ring-primary/10">
+              <Sparkles className="h-10 w-10 text-primary" />
+            </div>
           </motion.div>
-          <h3 className="mb-2 text-lg font-semibold">Ready to Transform</h3>
-          <p className="mb-6 max-w-sm text-sm text-muted-foreground leading-relaxed">
-            Enter your core idea and select which platforms you want. We'll
-            instantly generate optimized content for each one.
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h3 className="mb-3 text-xl font-bold">
+              Your Content Will Appear Here
+            </h3>
+            <p className="mb-6 max-w-md text-sm text-muted-foreground leading-relaxed">
+              Write your core idea on the left, select platforms, and click{" "}
+              <span className="font-semibold text-foreground">Transform</span>.
+              We'll generate optimized content for each platform in seconds.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
+                <X className="size-3.5" />
+                <span>X Threads</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
+                <Linkedin className="size-3.5" />
+                <span>LinkedIn Posts</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
+                <Tiktok className="size-3.5" />
+                <span>TikTok Scripts</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
+                <FileText className="size-3.5 text-black dark:text-white" />
+                <span>Blog Intros</span>
+              </div>
+            </div>
+          </motion.div>
         </div>
       ) : isGenerating ? (
         <LoadingSkeleton />
@@ -423,7 +457,7 @@ export function TransformOutput({
                         size="icon-sm"
                         onClick={() => setExpandedTransformation(null)}
                       >
-                        <X className="h-4 w-4" />
+                        <Close className="h-4 w-4" />
                       </Button>
                     </div>
 

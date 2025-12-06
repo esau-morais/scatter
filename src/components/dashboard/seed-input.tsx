@@ -1,15 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ChevronDown,
-  FileText,
-  Linkedin,
-  Settings2,
-  Sparkles,
-  Twitter,
-  Video,
-} from "lucide-react";
+import { ChevronDown, FileText, Settings2, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,27 +23,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Kbd, KbdGroup } from "../ui/kbd";
+import { Linkedin, Tiktok, X } from "../ui/svgs";
 
 const platforms = [
-  { id: "x", name: "X Thread", Icon: Twitter, color: "text-x-blue" },
-  {
-    id: "linkedin",
-    name: "LinkedIn",
-    Icon: Linkedin,
-    color: "text-linkedin-blue",
-  },
-  {
-    id: "tiktok",
-    name: "TikTok Script",
-    Icon: Video,
-    color: "text-tiktok-pink",
-  },
-  {
-    id: "blog",
-    name: "Blog Intro",
-    Icon: FileText,
-    color: "text-blog-emerald",
-  },
+  { id: "x", name: "X Thread", Icon: X },
+  { id: "linkedin", name: "LinkedIn", Icon: Linkedin },
+  { id: "tiktok", name: "TikTok Script", Icon: Tiktok },
+  { id: "blog", name: "Blog Intro", Icon: FileText },
 ] as const;
 
 export const toneOptions = [
@@ -231,14 +209,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                                 isSelected ? "bg-primary/20" : "bg-background",
                               )}
                             >
-                              <platform.Icon
-                                className={cn(
-                                  "h-3.5 w-3.5",
-                                  isSelected
-                                    ? platform.color
-                                    : "text-muted-foreground",
-                                )}
-                              />
+                              <platform.Icon className="size-3.5" />
                             </span>
                             <span
                               className={cn(

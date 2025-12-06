@@ -1,24 +1,17 @@
 "use client";
 
-import {
-  Check,
-  FileText,
-  Linkedin,
-  Sparkles,
-  Twitter,
-  Video,
-} from "lucide-react";
+import { Check, FileText, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { WaitlistForm } from "@/components/waitlist/waitlist-form";
-import { cn } from "@/lib/utils";
+import { Linkedin, Tiktok, X } from "../ui/svgs";
 
 const platforms = [
-  { name: "X Thread", icon: Twitter, color: "text-sky-400" },
-  { name: "LinkedIn", icon: Linkedin, color: "text-blue-500" },
-  { name: "TikTok Script", icon: Video, color: "text-pink-500" },
-  { name: "Blog Intro", icon: FileText, color: "text-emerald-400" },
+  { name: "X Thread", Icon: X },
+  { name: "LinkedIn", Icon: Linkedin },
+  { name: "TikTok Script", Icon: Tiktok },
+  { name: "Blog Intro", Icon: FileText },
 ];
 
 export function HeroSection() {
@@ -155,7 +148,7 @@ export function HeroSection() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 + i * 0.1 }}
                 >
-                  <platform.icon className={cn("size-4", platform.color)} />
+                  <platform.Icon className="size-4" />
                   <span className="flex-1 text-sm">{platform.name}</span>
                   <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10">
                     <Check className="h-3 w-3 text-primary" />

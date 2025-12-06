@@ -1,38 +1,27 @@
-import { FileText, Linkedin, Twitter, Video } from "lucide-react";
+import { FileText } from "lucide-react";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
+import { Linkedin, Tiktok, X } from "./svgs";
 
 export const platformConfig = {
   x: {
     name: "X Thread",
-    Icon: Twitter,
-    color: "text-x-blue",
-    bgColor: "bg-x-blue/10",
-    borderColor: "border-x-blue/20",
-    maxChars: 3500, // Max for 12-tweet thread (12 * 280 + numbering overhead)
+    Icon: X,
+    maxChars: 3500,
   },
   linkedin: {
     name: "LinkedIn",
     Icon: Linkedin,
-    color: "text-linkedin-blue",
-    bgColor: "bg-linkedin-blue/10",
-    borderColor: "border-linkedin-blue/20",
     maxChars: 3000,
   },
   tiktok: {
     name: "TikTok Script",
-    Icon: Video,
-    color: "text-tiktok-pink",
-    bgColor: "bg-tiktok-pink/10",
-    borderColor: "border-tiktok-pink/20",
+    Icon: Tiktok,
     maxChars: 2200,
   },
   blog: {
     name: "Blog Intro",
     Icon: FileText,
-    color: "text-blog-emerald",
-    bgColor: "bg-blog-emerald/10",
-    borderColor: "border-blog-emerald/20",
     maxChars: 1000,
   },
 } as const;
@@ -51,7 +40,7 @@ const sizeClasses = {
 };
 
 const iconSizeClasses = {
-  sm: "h-3.5 w-3.5",
+  sm: "size-3.5",
   default: "h-4 w-4",
   lg: "h-5 w-5",
 };
@@ -67,10 +56,8 @@ export function PlatformBadge({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center transition-colors",
+        "flex shrink-0 items-center justify-center",
         sizeClasses[size],
-        config.bgColor,
-        config.color,
         className,
       )}
     >

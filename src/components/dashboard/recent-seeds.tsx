@@ -249,21 +249,60 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex min-h-[500px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm"
+          className="flex min-h-[500px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-card/30 via-card/20 to-background/50 p-12 text-center backdrop-blur-sm"
         >
-          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-            <History className="h-10 w-10 text-primary" />
-          </div>
-          <h3 className="mb-3 text-2xl font-bold">No Transformations Yet</h3>
-          <p className="mb-8 max-w-md text-sm text-muted-foreground leading-relaxed">
-            Your transformation history will appear here once you start creating
-            content. Each seed idea will be saved with all its platform outputs
-            for easy access later.
-          </p>
+          <motion.div
+            animate={{
+              rotate: [0, 10, -10, 10, 0],
+            }}
+            transition={{
+              duration: 5,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+            className="relative mb-6"
+          >
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
+            <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5 ring-4 ring-primary/10">
+              <History className="h-12 w-12 text-primary" />
+            </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h3 className="mb-3 text-2xl font-bold">No Transformations Yet</h3>
+            <p className="mb-6 max-w-md text-sm text-muted-foreground leading-relaxed">
+              Your transformation history will appear here once you start
+              creating content. Each seed idea will be saved with all its
+              platform outputs for easy access later.
+            </p>
+            <div className="mb-8 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <CheckCircle className="size-3.5" />
+                </div>
+                <span>View all seeds</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Search className="size-3.5" />
+                </div>
+                <span>Search content</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Filter className="size-3.5" />
+                </div>
+                <span>Filter by platform</span>
+              </div>
+            </div>
+          </motion.div>
           <Link href="/dashboard">
             <Button
               size="lg"
-              className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)]"
+              className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)]"
             >
               <Sparkles className="mr-2 h-4 w-4" />
               Create Your First Transformation
@@ -323,7 +362,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                                 onDeleteSeed(seed.id);
                               }}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="size-3.5" />
                             </Button>
                           )}
                         </div>
@@ -368,7 +407,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                                 )}
                               />
                               {isPosted && (
-                                <div className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-success">
+                                <div className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full bg-success">
                                   <CheckCircle className="h-2.5 w-2.5 text-white" />
                                 </div>
                               )}
