@@ -2,11 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { OnboardingBanner } from "@/components/dashboard/onboarding-banner";
 import { RecentSeeds } from "@/components/dashboard/recent-seeds";
+import { SaveDemoPrompt } from "@/components/dashboard/save-demo-prompt";
 import {
   SeedInput,
   type TransformOptions,
@@ -14,6 +16,11 @@ import {
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { TransformOutput } from "@/components/dashboard/transform-output";
 import type { Seed, Transformation } from "@/db/schema";
+import {
+  clearDemoFromStorage,
+  type DemoResult,
+  getDemoFromStorage,
+} from "@/lib/schemas/demo";
 import { useTRPC } from "@/lib/trpc/client";
 
 type SeedHistoryItem = {
@@ -26,12 +33,85 @@ export function DashboardClient() {
   const queryClient = useQueryClient();
   const seedsListOptions = trpc.seeds.list.queryOptions();
   const { data: seedHistory = [] } = useQuery(seedsListOptions);
+  const { data: dashboardData } = useQuery(
+    trpc.transformations.getDashboardData.queryOptions(),
+  );
 
   const [latestGeneration, setLatestGeneration] =
     useState<SeedHistoryItem | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [pendingDemo, setPendingDemo] = useState<DemoResult | null>(null);
 
   const searchParams = useSearchParams();
   const view = searchParams.get("view");
+  const fromParam = searchParams.get("from");
+
+  // Check for pending demo from /try page
+  useEffect(() => {
+    const dismissed = localStorage.getItem("scatter_onboarding_dismissed");
+
+    if (fromParam === "try") {
+      const storedDemo = getDemoFromStorage();
+      if (storedDemo) {
+        setPendingDemo(storedDemo);
+      }
+      if (!dismissed) {
+        setShowOnboarding(true);
+      }
+    } else if (fromParam === "onboarding" && !dismissed) {
+      setShowOnboarding(true);
+    }
+  }, [fromParam]);
+
+  // Save demo mutation
+  const saveDemoMutation = useMutation(
+    trpc.onboarding.saveDemo.mutationOptions({
+      onSuccess: async (data) => {
+        setPendingDemo(null);
+        clearDemoFromStorage();
+        setLatestGeneration(data);
+
+        // Update cache
+        const currentHistory =
+          queryClient.getQueryData(seedsListOptions.queryKey) ?? [];
+        queryClient.setQueryData(seedsListOptions.queryKey, [
+          data,
+          ...currentHistory,
+        ]);
+        queryClient.invalidateQueries(
+          trpc.transformations.getDashboardData.queryOptions(),
+        );
+
+        toast.success("Demo transformation saved to your account!");
+        await confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      },
+      onError: (error) => {
+        toast.error("Failed to save demo", { description: error.message });
+      },
+    }),
+  );
+
+  const handleSaveDemo = () => {
+    if (!pendingDemo) return;
+    saveDemoMutation.mutate({
+      seed: pendingDemo.content,
+      platforms: pendingDemo.transformations.map((t) => t.platform),
+      transformations: pendingDemo.transformations.map((t) => ({
+        platform: t.platform,
+        content: t.content,
+      })),
+    });
+  };
+
+  const handleDismissDemo = () => {
+    setPendingDemo(null);
+    clearDemoFromStorage();
+  };
+
+  const handleDismissOnboarding = () => {
+    setShowOnboarding(false);
+    localStorage.setItem("scatter_onboarding_dismissed", "true");
+  };
 
   const generateMutation = useMutation(
     trpc.transformations.generate.mutationOptions({
@@ -217,6 +297,24 @@ export function DashboardClient() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-8"
           >
+            <AnimatePresence>
+              {pendingDemo && (
+                <SaveDemoPrompt
+                  transformationCount={pendingDemo.transformations.length}
+                  onSave={handleSaveDemo}
+                  onDismiss={handleDismissDemo}
+                  isSaving={saveDemoMutation.isPending}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {showOnboarding && !pendingDemo && (
+                <OnboardingBanner
+                  remaining={dashboardData?.remaining}
+                  onDismiss={handleDismissOnboarding}
+                />
+              )}
+            </AnimatePresence>
             <StatsCards />
             <div className="grid gap-6 lg:grid-cols-2">
               <SeedInput

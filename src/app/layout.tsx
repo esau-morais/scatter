@@ -1,3 +1,4 @@
+import { MotionConfig } from "motion/react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TRPCReactProvider } from "@/lib/trpc/client";
@@ -46,10 +47,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TRPCReactProvider>
-            {children}
-            <Toaster position="top-center" />
-          </TRPCReactProvider>
+          <MotionConfig reducedMotion="user">
+            <TRPCReactProvider>
+              {children}
+              <Toaster position="top-center" />
+            </TRPCReactProvider>
+          </MotionConfig>
         </ThemeProvider>
       </body>
     </html>

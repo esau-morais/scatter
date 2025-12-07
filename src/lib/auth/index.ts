@@ -29,11 +29,9 @@ export const auth = betterAuth({
       create: {
         before: async (user) => {
           const email = user.email.toLowerCase();
-          const [entry] = await db
-            .select()
-            .from(waitlist)
-            .where(and(eq(waitlist.email, email), eq(waitlist.approved, true)))
-            .limit(1);
+          const entry = await db.query.waitlist.findFirst({
+            where: and(eq(waitlist.email, email), eq(waitlist.approved, true)),
+          });
 
           if (!entry) {
             throw new APIError("FORBIDDEN", { message: "not_approved" });

@@ -35,10 +35,12 @@ export const transformationsRouter = router({
   getDashboardData: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const [user] = await db
-      .select({ plan: users.plan })
-      .from(users)
-      .where(eq(users.id, userId));
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: {
+        plan: true,
+      },
+    });
 
     if (!user) {
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
@@ -85,10 +87,12 @@ export const transformationsRouter = router({
       const { content, platforms, tone, length, persona } = input;
       const userId = ctx.session.user.id;
 
-      const [user] = await db
-        .select({ plan: users.plan })
-        .from(users)
-        .where(eq(users.id, userId));
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          plan: true,
+        },
+      });
 
       if (!user) {
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
@@ -231,10 +235,9 @@ export const transformationsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [seed] = await db
-        .select()
-        .from(seeds)
-        .where(eq(seeds.id, input.seedId));
+      const seed = await db.query.seeds.findFirst({
+        where: eq(seeds.id, input.seedId),
+      });
 
       if (!seed || seed.userId !== ctx.session.user.id) {
         throw new Error("Seed not found");
@@ -347,10 +350,12 @@ export const transformationsRouter = router({
       const { id, tone, length, persona } = input;
       const userId = ctx.session.user.id;
 
-      const [user] = await db
-        .select({ plan: users.plan })
-        .from(users)
-        .where(eq(users.id, userId));
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          plan: true,
+        },
+      });
 
       if (!user) {
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });

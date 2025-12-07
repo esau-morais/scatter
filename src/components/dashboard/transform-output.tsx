@@ -44,15 +44,15 @@ function LoadingSkeleton() {
           className="border-border bg-secondary/50 p-4 backdrop-blur-sm"
         >
           <div className="flex items-start gap-3">
-            <Skeleton className="h-9 w-9 rounded-lg" />
+            <Skeleton className="size-9 rounded-lg" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-3 w-full" />
               <Skeleton className="h-3 w-3/4" />
             </div>
             <div className="flex gap-1">
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="size-8 rounded-md" />
+              <Skeleton className="size-8 rounded-md" />
             </div>
           </div>
         </Card>
@@ -111,27 +111,9 @@ export function TransformOutput({
   if (isGenerating && !hasContent) {
     return (
       <Card className="flex min-h-[400px] flex-col items-center justify-center border-border/50 bg-card/50 p-6 text-center backdrop-blur-sm">
-        <motion.div
-          animate={{
-            rotate: 360,
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            rotate: {
-              duration: 2,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "linear",
-            },
-            scale: {
-              duration: 1.5,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            },
-          }}
-          className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5"
-        >
-          <Sparkles className="h-8 w-8 text-primary" />
-        </motion.div>
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5 motion-safe:animate-spin">
+          <Sparkles className="size-8 text-primary" />
+        </div>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -145,33 +127,9 @@ export function TransformOutput({
             15-20 seconds.
           </p>
           <div className="flex items-center justify-center gap-2">
-            <motion.div
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{
-                duration: 1.5,
-                repeat: Number.POSITIVE_INFINITY,
-                delay: 0,
-              }}
-              className="h-2 w-2 rounded-full bg-primary"
-            />
-            <motion.div
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{
-                duration: 1.5,
-                repeat: Number.POSITIVE_INFINITY,
-                delay: 0.2,
-              }}
-              className="h-2 w-2 rounded-full bg-primary"
-            />
-            <motion.div
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{
-                duration: 1.5,
-                repeat: Number.POSITIVE_INFINITY,
-                delay: 0.4,
-              }}
-              className="h-2 w-2 rounded-full bg-primary"
-            />
+            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse" />
+            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse motion-safe:delay-200" />
+            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse motion-safe:delay-400" />
           </div>
         </motion.div>
       </Card>
@@ -193,23 +151,12 @@ export function TransformOutput({
 
       {!hasContent ? (
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-secondary/30 via-secondary/20 to-background/50 p-8 text-center">
-          <motion.div
-            animate={{
-              y: [0, -10, 0],
-              scale: [1, 1.05, 1],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            }}
-            className="relative mb-6"
-          >
+          <div className="relative mb-6 motion-safe:animate-bounce">
             <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" />
             <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/30 to-primary/10 ring-4 ring-primary/10">
-              <Sparkles className="h-10 w-10 text-primary" />
+              <Sparkles className="size-10 text-primary" />
             </div>
-          </motion.div>
+          </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -312,7 +259,7 @@ export function TransformOutput({
                           <Button
                             size="icon-sm"
                             variant="ghost"
-                            className="h-8 w-8 transition-all hover:bg-primary/10"
+                            className="size-8 transition-all hover:bg-primary/10"
                             onClick={() =>
                               handleRegenerate(transformation.id, config.name)
                             }
@@ -320,9 +267,9 @@ export function TransformOutput({
                           >
                             <RefreshCw
                               className={cn(
-                                "h-4 w-4",
+                                "size-4",
                                 isRegenerating === transformation.id &&
-                                  "animate-spin",
+                                  "animate-spin motion-reduce:animate-none",
                               )}
                             />
                           </Button>
@@ -330,18 +277,18 @@ export function TransformOutput({
                         <Button
                           size="icon-sm"
                           variant="ghost"
-                          className="h-8 w-8 transition-all hover:bg-secondary"
+                          className="size-8 transition-all hover:bg-secondary"
                           onClick={() =>
                             setExpandedTransformation(transformation)
                           }
                         >
-                          <Expand className="h-4 w-4" />
+                          <Expand className="size-4" />
                         </Button>
                         <Button
                           size="icon-sm"
                           variant="ghost"
                           className={cn(
-                            "h-8 w-8 transition-all",
+                            "size-8 transition-all",
                             isPosted && "bg-success/10",
                           )}
                           onClick={() =>
@@ -354,7 +301,7 @@ export function TransformOutput({
                         >
                           <Send
                             className={cn(
-                              "h-4 w-4 transition-colors",
+                              "size-4 transition-colors",
                               isPosted && "text-success",
                             )}
                           />
@@ -362,7 +309,7 @@ export function TransformOutput({
                         <Button
                           size="icon-sm"
                           variant="ghost"
-                          className="h-8 w-8 transition-all hover:bg-primary/10"
+                          className="size-8 transition-all hover:bg-primary/10"
                           onClick={() =>
                             handleCopy(
                               transformation.id,
@@ -380,7 +327,7 @@ export function TransformOutput({
                                 exit={{ scale: 0 }}
                                 transition={{ duration: 0.2 }}
                               >
-                                <Check className="h-4 w-4 text-success" />
+                                <Check className="size-4 text-success" />
                               </motion.div>
                             ) : (
                               <motion.div
@@ -390,7 +337,7 @@ export function TransformOutput({
                                 exit={{ scale: 0 }}
                                 transition={{ duration: 0.2 }}
                               >
-                                <Copy className="h-4 w-4" />
+                                <Copy className="size-4" />
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -457,7 +404,7 @@ export function TransformOutput({
                         size="icon-sm"
                         onClick={() => setExpandedTransformation(null)}
                       >
-                        <Close className="h-4 w-4" />
+                        <Close className="size-4" />
                       </Button>
                     </div>
 
@@ -480,7 +427,7 @@ export function TransformOutput({
                             setExpandedTransformation(null);
                           }}
                         >
-                          <RefreshCw className="mr-2 h-4 w-4" />
+                          <RefreshCw className="mr-2 size-4" />
                           Regenerate
                         </Button>
                       )}
@@ -494,7 +441,7 @@ export function TransformOutput({
                           );
                         }}
                       >
-                        <Copy className="mr-2 h-4 w-4" />
+                        <Copy className="mr-2 size-4" />
                         Copy Content
                       </Button>
                     </div>

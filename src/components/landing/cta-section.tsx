@@ -19,7 +19,7 @@ export function CTASection() {
           <h2 className="mb-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
             Ready to stop the
             <br />
-            <span className="bg-linear-to-br from-primary via-[oklch(0.8_0.18_50)] to-primary bg-size-[200%_auto] animate-gradient bg-clip-text text-transparent">
+            <span className="bg-linear-to-br from-primary via-[oklch(0.8_0.18_50)] to-primary bg-size-[200%_auto] motion-safe:animate-gradient bg-clip-text text-transparent">
               content treadmill?
             </span>
           </h2>

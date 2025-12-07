@@ -108,7 +108,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
         <div className="mb-6 space-y-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search transformations..."
                 value={searchQuery}
@@ -121,7 +121,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                   onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="size-4" />
                 </button>
               )}
             </div>
@@ -134,10 +134,10 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                 hasActiveFilters && "border-primary/50 text-primary",
               )}
             >
-              <Filter className="h-4 w-4" />
+              <Filter className="size-4" />
               Filters
               {hasActiveFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
                   {
                     [
                       !!searchQuery,
@@ -264,7 +264,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
           >
             <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
             <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5 ring-4 ring-primary/10">
-              <History className="h-12 w-12 text-primary" />
+              <History className="size-12 text-primary" />
             </div>
           </motion.div>
           <motion.div
@@ -280,19 +280,19 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
             </p>
             <div className="mb-8 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <CheckCircle className="size-3.5" />
                 </div>
                 <span>View all seeds</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Search className="size-3.5" />
                 </div>
                 <span>Search content</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Filter className="size-3.5" />
                 </div>
                 <span>Filter by platform</span>
@@ -304,7 +304,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
               size="lg"
               className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)]"
             >
-              <Sparkles className="mr-2 h-4 w-4" />
+              <Sparkles className="mr-2 size-4" />
               Create Your First Transformation
             </Button>
           </Link>
@@ -316,7 +316,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
           className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm"
         >
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-            <Search className="h-8 w-8 text-muted-foreground" />
+            <Search className="size-8 text-muted-foreground" />
           </div>
           <h3 className="mb-2 text-lg font-semibold">No matches found</h3>
           <p className="mb-6 max-w-sm text-sm text-muted-foreground">
@@ -356,7 +356,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                              className="size-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onDeleteSeed(seed.id);
@@ -371,7 +371,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                         </p>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1.5">
-                            <Clock className="h-3 w-3" />
+                            <Clock className="size-3" />
                             {new Date(seed.createdAt).toLocaleDateString(
                               undefined,
                               {
@@ -387,7 +387,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                           </div>
                           {postedCount > 0 && (
                             <div className="flex items-center gap-1.5 text-success">
-                              <CheckCircle className="h-3 w-3" />
+                              <CheckCircle className="size-3" />
                               {postedCount}/{totalCount} posted
                             </div>
                           )}

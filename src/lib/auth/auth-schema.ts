@@ -2,7 +2,6 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
-  integer,
   pgEnum,
   pgTable,
   text,
@@ -19,6 +18,7 @@ export const users = pgTable("users", {
   plan: planEnum("plan").default("free").notNull(),
   polarCustomerId: text("polar_customer_id"),
   polarSubscriptionId: text("polar_subscription_id"),
+  onboardingCompleted: boolean("onboarding_completed").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

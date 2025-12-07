@@ -74,10 +74,10 @@ export function WaitlistForm({
           animate={{ scale: 1 }}
           transition={{ type: "spring", delay: 0.1 }}
         >
-          <CheckCircle2 className="h-5 w-5 text-primary" />
+          <CheckCircle2 className="size-5 text-primary" />
         </motion.div>
         <span className="font-medium text-primary">You're on the list!</span>
-        <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+        <Sparkles className="size-4 text-primary motion-safe:animate-pulse" />
       </motion.div>
     );
   }
@@ -136,7 +136,7 @@ export function WaitlistForm({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                       >
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -148,7 +148,7 @@ export function WaitlistForm({
                       >
                         <span className="hidden sm:inline">Join Waitlist</span>
                         <span className="sm:hidden">Join</span>
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                       </motion.div>
                     )}
                   </AnimatePresence>

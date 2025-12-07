@@ -25,7 +25,6 @@ export const POST = Webhooks({
             `Processing ${payload.type} for customer ${customer.id}, email: ${customer.email}, plan: ${plan}`,
           );
 
-          // Match by polarCustomerId first, then fallback to case-insensitive email
           const result = await db
             .update(users)
             .set({

@@ -17,7 +17,6 @@ const plans = [
     price: "$0",
     description: "For getting started",
     features: ["10 transformations/month", "Basic AI models"],
-    // isCurrent: true, // Removed, will be determined dynamically
   },
   {
     name: "Creator",
@@ -36,7 +35,7 @@ const plans = [
 ];
 
 type PricingPlansProps = {
-  currentPlanId?: string; // New prop to indicate the current active plan
+  currentPlanId?: string;
 };
 
 export function PricingPlans({ currentPlanId }: PricingPlansProps) {
@@ -70,7 +69,7 @@ export function PricingPlans({ currentPlanId }: PricingPlansProps) {
               <ul className="space-y-2">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
+                    <Check className="mr-2 size-4 text-primary" />
                     {feature}
                   </li>
                 ))}

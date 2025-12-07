@@ -34,15 +34,15 @@ interface PlatformBadgeProps extends ComponentProps<"div"> {
 }
 
 const sizeClasses = {
-  sm: "h-7 w-7 rounded-md",
-  default: "h-9 w-9 rounded-lg",
-  lg: "h-11 w-11 rounded-lg",
+  sm: "size-7 rounded-md",
+  default: "size-9 rounded-lg",
+  lg: "size-11 rounded-lg",
 };
 
 const iconSizeClasses = {
   sm: "size-3.5",
-  default: "h-4 w-4",
-  lg: "h-5 w-5",
+  default: "size-4",
+  lg: "size-5",
 };
 
 export function PlatformBadge({

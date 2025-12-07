@@ -15,8 +15,8 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
+            <Sparkles className="size-4 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold tracking-tight">Scatter</span>
         </div>
@@ -28,7 +28,7 @@ export function DashboardHeader() {
               pathname === "/dashboard" && !currentView && "bg-accent",
             )}
           >
-            <Plus className="mr-1.5 h-4 w-4" />
+            <Plus className="mr-1.5 size-4" />
             Create
           </Link>
           <Link
@@ -40,12 +40,12 @@ export function DashboardHeader() {
                 "bg-accent",
             )}
           >
-            <History className="mr-1.5 h-4 w-4" />
+            <History className="mr-1.5 size-4" />
             History
           </Link>
           {/* <Button variant="ghost" size="icon" asChild> */}
           {/*   <Link href="/dashboard/settings"> */}
-          {/*     <Settings className="h-4 w-4" /> */}
+          {/*     <Settings className="size-4" /> */}
           {/*   </Link> */}
           {/* </Button> */}
         </div>

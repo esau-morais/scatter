@@ -43,10 +43,9 @@ export const seedsRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
-      const [seed] = await db
-        .select()
-        .from(seeds)
-        .where(eq(seeds.id, input.id));
+      const seed = await db.query.seeds.findFirst({
+        where: eq(seeds.id, input.id),
+      });
 
       if (!seed || seed.userId !== ctx.session.user.id) {
         throw new Error("Seed not found");

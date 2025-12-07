@@ -205,7 +205,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                             />
                             <span
                               className={cn(
-                                "flex h-7 w-7 items-center justify-center rounded-md transition-all",
+                                "flex size-7 items-center justify-center rounded-md transition-all",
                                 isSelected ? "bg-primary/20" : "bg-background",
                               )}
                             >
@@ -248,7 +248,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
               className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-3 py-2.5 text-sm transition-all hover:bg-secondary/50"
             >
               <span className="flex items-center gap-2">
-                <Settings2 className="h-4 w-4 text-muted-foreground" />
+                <Settings2 className="size-4 text-muted-foreground" />
                 <span className="font-medium text-muted-foreground">
                   Style Options
                 </span>
@@ -260,7 +260,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
               </span>
               <ChevronDown
                 className={cn(
-                  "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                  "size-4 text-muted-foreground transition-transform duration-200",
                   showOptions && "rotate-180",
                 )}
               />
@@ -397,13 +397,13 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                       ease: "linear",
                     }}
                   >
-                    <Sparkles className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 size-4" />
                   </motion.span>
                   Transforming...
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles className="mr-2 size-4" />
                   Transform to {selectedPlatforms.length}{" "}
                   {selectedPlatforms.length === 1 ? "Platform" : "Platforms"}
                 </>

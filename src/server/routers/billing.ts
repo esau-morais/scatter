@@ -8,15 +8,14 @@ export const billingRouter = router({
   getSubscription: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const [currentUser] = await db
-      .select({
-        plan: users.plan,
-        polarCustomerId: users.polarCustomerId,
-        polarSubscriptionId: users.polarSubscriptionId,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: {
+        plan: true,
+        polarCustomerId: true,
+        polarSubscriptionId: true,
+      },
+    });
 
     if (!currentUser) {
       return { currentPlanId: undefined };
