@@ -22,6 +22,7 @@ const createContext = cache(async () => {
   return {
     session,
     db,
+    headers: headersList,
   };
 });
 
