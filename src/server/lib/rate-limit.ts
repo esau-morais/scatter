@@ -33,7 +33,8 @@ export async function checkGuestRateLimit(ip: string): Promise<boolean> {
     return success;
   } catch (error) {
     console.error("Rate limit error:", error);
-    return false;
+    // Fail-open: allow requests when Redis is unavailable
+    return true;
   }
 }
 
@@ -45,7 +46,8 @@ export async function checkAuthenticatedRateLimit(
     return success;
   } catch (error) {
     console.error("Rate limit error:", error);
-    return false;
+    // Fail-open: allow requests when Redis is unavailable
+    return true;
   }
 }
 
