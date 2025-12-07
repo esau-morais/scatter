@@ -82,6 +82,10 @@ export const onboardingRouter = router({
           .values(transformationsToInsert)
           .returning();
 
+        // Note: We intentionally don't update usageStats here.
+        // Demo content was generated for free before signup, so it shouldn't
+        // count against the user's quota. Dashboard stats query actual tables.
+
         await tx
           .update(users)
           .set({ onboardingCompleted: true })

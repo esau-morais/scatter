@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google";
 import { TRPCError } from "@trpc/server";
 import { generateObject } from "ai";
-import { eq, sql } from "drizzle-orm";
+import { and, count, eq, gte, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { seeds, transformations, usageStats } from "@/db/schema";
@@ -34,6 +34,7 @@ const lengthDescriptions: Record<string, string> = {
 export const transformationsRouter = router({
   getDashboardData: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
+    const monthStart = getStartOfMonth();
 
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
@@ -46,24 +47,58 @@ export const transformationsRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    const stats = await getCurrentMonthUsage(userId);
+    const [seedsResult, transformationsResult, postedResult, quotaStats] =
+      await Promise.all([
+        db
+          .select({ count: count() })
+          .from(seeds)
+          .where(
+            and(eq(seeds.userId, userId), gte(seeds.createdAt, monthStart)),
+          ),
+        db
+          .select({ count: count() })
+          .from(transformations)
+          .innerJoin(seeds, eq(transformations.seedId, seeds.id))
+          .where(
+            and(
+              eq(seeds.userId, userId),
+              gte(transformations.createdAt, monthStart),
+            ),
+          ),
+        db
+          .select({ count: count() })
+          .from(transformations)
+          .innerJoin(seeds, eq(transformations.seedId, seeds.id))
+          .where(
+            and(
+              eq(seeds.userId, userId),
+              gte(transformations.createdAt, monthStart),
+              isNotNull(transformations.postedAt),
+            ),
+          ),
+        getCurrentMonthUsage(userId),
+      ]);
+
+    const seedsCreated = seedsResult[0]?.count;
+    const totalTransformations = transformationsResult[0]?.count;
+    const transformationsPosted = postedResult[0]?.count;
     const limit = USAGE_LIMITS[user.plan];
+
     const successRate =
-      stats.transformationsCreated > 0
-        ? Math.round(
-            (stats.transformationsPosted / stats.transformationsCreated) * 100,
-          )
+      totalTransformations > 0
+        ? Math.round((transformationsPosted / totalTransformations) * 100)
         : 0;
 
     return {
-      seedsCreated: stats.seedsCreated,
-      totalTransformations: stats.transformationsCreated,
+      seedsCreated,
+      totalTransformations,
       successRate,
-      currentUsage: stats.transformationsCreated,
+      // Quota is based on billable usage only (excludes free demo content)
+      currentUsage: quotaStats.transformationsCreated,
       limit,
       remaining:
         limit !== null
-          ? Math.max(0, limit - stats.transformationsCreated)
+          ? Math.max(0, limit - quotaStats.transformationsCreated)
           : null,
       plan: user.plan,
     };
