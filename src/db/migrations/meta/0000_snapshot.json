@@ -1,5 +1,5 @@
 {
-  "id": "1e83f2cd-e317-4a5a-8ec4-d38f4f3526ed",
+  "id": "4df3c3e4-7b48-473f-8a47-e8e9511f3181",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -199,6 +199,20 @@
         },
         "transformations_posted": {
           "name": "transformations_posted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "free_seeds_created": {
+          "name": "free_seeds_created",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "free_transformations_created": {
+          "name": "free_transformations_created",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

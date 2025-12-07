@@ -1,9 +1,10 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { seeds, transformations } from "@/db/schema";
+import { seeds, transformations, usageStats } from "@/db/schema";
 import { users } from "@/lib/auth/auth-schema";
+import { getStartOfMonth } from "../lib/usage";
 import { protectedProcedure, router } from "../trpc";
 
 const platformEnum = z.enum(["x", "linkedin", "tiktok", "blog"]);
@@ -82,9 +83,22 @@ export const onboardingRouter = router({
           .values(transformationsToInsert)
           .returning();
 
-        // Note: We intentionally don't update usageStats here.
-        // Demo content was generated for free before signup, so it shouldn't
-        // count against the user's quota. Dashboard stats query actual tables.
+        // Track as free usage (doesn't count against quota)
+        await tx
+          .insert(usageStats)
+          .values({
+            userId,
+            month: getStartOfMonth(),
+            freeSeedsCreated: 1,
+            freeTransformationsCreated: savedTransformations.length,
+          })
+          .onConflictDoUpdate({
+            target: [usageStats.userId, usageStats.month],
+            set: {
+              freeSeedsCreated: sql`${usageStats.freeSeedsCreated} + 1`,
+              freeTransformationsCreated: sql`${usageStats.freeTransformationsCreated} + ${savedTransformations.length}`,
+            },
+          });
 
         await tx
           .update(users)

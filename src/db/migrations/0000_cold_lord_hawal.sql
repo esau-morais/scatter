@@ -24,7 +24,9 @@ CREATE TABLE "usage_stats" (
 	"month" timestamp NOT NULL,
 	"seeds_created" integer DEFAULT 0 NOT NULL,
 	"transformations_created" integer DEFAULT 0 NOT NULL,
-	"transformations_posted" integer DEFAULT 0 NOT NULL
+	"transformations_posted" integer DEFAULT 0 NOT NULL,
+	"free_seeds_created" integer DEFAULT 0 NOT NULL,
+	"free_transformations_created" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "waitlist" (

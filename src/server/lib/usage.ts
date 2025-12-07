@@ -18,6 +18,8 @@ export async function getCurrentMonthUsage(userId: string) {
       seedsCreated: 0,
       transformationsCreated: 0,
       transformationsPosted: 0,
+      freeSeedsCreated: 0,
+      freeTransformationsCreated: 0,
     }
   );
 }
