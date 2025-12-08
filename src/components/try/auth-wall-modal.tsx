@@ -25,7 +25,7 @@ export function AuthWallModal({ isOpen, onClose }: AuthWallModalProps) {
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/dashboard?from=try",
-        errorCallbackURL: "/login?error=auth_failed",
+        errorCallbackURL: "/login?from=try",
       });
     } catch {
       setError("Failed to sign in with Google. Please try again.");
@@ -40,7 +40,7 @@ export function AuthWallModal({ isOpen, onClose }: AuthWallModalProps) {
       await authClient.signIn.social({
         provider: "github",
         callbackURL: "/dashboard?from=try",
-        errorCallbackURL: "/login?error=auth_failed",
+        errorCallbackURL: "/login?from=try",
       });
     } catch {
       setError("Failed to sign in with GitHub. Please try again.");

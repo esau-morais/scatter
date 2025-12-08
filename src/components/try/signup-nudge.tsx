@@ -18,7 +18,7 @@ export function SignupNudge() {
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/dashboard?from=try",
-        errorCallbackURL: "/login?error=auth_failed",
+        errorCallbackURL: "/login?from=try",
       });
     } catch {
       setIsLoadingGoogle(false);
@@ -31,7 +31,7 @@ export function SignupNudge() {
       await authClient.signIn.social({
         provider: "github",
         callbackURL: "/dashboard?from=try",
-        errorCallbackURL: "/login?error=auth_failed",
+        errorCallbackURL: "/login?from=try",
       });
     } catch {
       setIsLoadingGithub(false);
