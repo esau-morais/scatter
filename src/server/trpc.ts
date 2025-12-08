@@ -3,6 +3,7 @@ import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import superjson from "superjson";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
+import { getFingerprint } from "./lib/fingerprint";
 
 export async function createContext(opts: FetchCreateContextFnOptions) {
   const session = await auth.api.getSession({
@@ -13,6 +14,7 @@ export async function createContext(opts: FetchCreateContextFnOptions) {
     session,
     db,
     headers: opts.req.headers,
+    fingerprint: getFingerprint(opts.req.headers),
   };
 }
 

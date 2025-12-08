@@ -2,7 +2,7 @@ import { google } from "@ai-sdk/google";
 import { TRPCError } from "@trpc/server";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { checkGuestRateLimit, getClientIP } from "../lib/rate-limit";
+import { checkGuestRateLimit } from "../lib/rate-limit";
 import { publicProcedure, router } from "../trpc";
 
 const platformEnum = z.enum(["x", "linkedin", "tiktok", "blog"]);
@@ -41,14 +41,12 @@ export const guestRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { content, platforms, tone, length, persona } = input;
 
-      const clientIP = getClientIP(ctx.headers);
-
-      const allowed = await checkGuestRateLimit(clientIP);
+      const allowed = await checkGuestRateLimit(ctx.fingerprint);
       if (!allowed) {
         throw new TRPCError({
           code: "TOO_MANY_REQUESTS",
           message:
-            "You've used your free try! Sign up for 10 free transformations per month, or try again in 15 minutes.",
+            "You've used your free try! Sign up for 10 free transformations per month, or try again tomorrow.",
         });
       }
 

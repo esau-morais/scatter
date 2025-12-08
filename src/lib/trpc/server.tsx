@@ -9,6 +9,7 @@ import { headers } from "next/headers";
 import { cache, type ReactNode } from "react";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
+import { getFingerprint } from "@/server/lib/fingerprint";
 import type { AppRouter } from "@/server/routers";
 import { appRouter } from "@/server/routers";
 import { makeQueryClient } from "./query-client";
@@ -23,6 +24,7 @@ const createContext = cache(async () => {
     session,
     db,
     headers: headersList,
+    fingerprint: getFingerprint(headersList),
   };
 });
 
