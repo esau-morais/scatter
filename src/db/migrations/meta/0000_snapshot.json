@@ -1,5 +1,5 @@
 {
-  "id": "27af4a11-56e0-44d3-b501-41642b16a3ef",
+  "id": "4df3c3e4-7b48-473f-8a47-e8e9511f3181",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -48,7 +48,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "seeds_user_id_idx": {
+          "name": "seeds_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "seeds_user_id_users_id_fk": {
           "name": "seeds_user_id_users_id_fk",
@@ -110,7 +126,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "transformations_seed_id_idx": {
+          "name": "transformations_seed_id_idx",
+          "columns": [
+            {
+              "expression": "seed_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "transformations_seed_id_seeds_id_fk": {
           "name": "transformations_seed_id_seeds_id_fk",
@@ -167,6 +199,20 @@
         },
         "transformations_posted": {
           "name": "transformations_posted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "free_seeds_created": {
+          "name": "free_seeds_created",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "free_transformations_created": {
+          "name": "free_transformations_created",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -525,6 +571,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "onboarding_completed": {
+          "name": "onboarding_completed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",

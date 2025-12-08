@@ -62,8 +62,8 @@ export function FeaturesSection() {
               transition={{ delay: i * 0.1 }}
             >
               <Card className="group relative h-full overflow-hidden border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-colors hover:border-primary/30 hover:bg-card/80">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <feature.icon className="h-6 w-6" />
+                <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <feature.icon className="size-6" />
                 </div>
                 <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>

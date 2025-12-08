@@ -35,28 +35,33 @@ export const transformationsRouter = router({
   getDashboardData: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    const [user] = await db
-      .select({ plan: users.plan })
-      .from(users)
-      .where(eq(users.id, userId));
+    const [user, stats] = await Promise.all([
+      db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { plan: true },
+      }),
+      getCurrentMonthUsage(userId),
+    ]);
 
     if (!user) {
       throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
     }
 
-    const stats = await getCurrentMonthUsage(userId);
     const limit = USAGE_LIMITS[user.plan];
+    // Display: paid + free usage combined
+    const totalSeeds = stats.seedsCreated + stats.freeSeedsCreated;
+    const totalTransformations =
+      stats.transformationsCreated + stats.freeTransformationsCreated;
     const successRate =
-      stats.transformationsCreated > 0
-        ? Math.round(
-            (stats.transformationsPosted / stats.transformationsCreated) * 100,
-          )
+      totalTransformations > 0
+        ? Math.round((stats.transformationsPosted / totalTransformations) * 100)
         : 0;
 
     return {
-      seedsCreated: stats.seedsCreated,
-      totalTransformations: stats.transformationsCreated,
+      seedsCreated: totalSeeds,
+      totalTransformations,
       successRate,
+      // Quota: paid usage only
       currentUsage: stats.transformationsCreated,
       limit,
       remaining:
@@ -85,10 +90,12 @@ export const transformationsRouter = router({
       const { content, platforms, tone, length, persona } = input;
       const userId = ctx.session.user.id;
 
-      const [user] = await db
-        .select({ plan: users.plan })
-        .from(users)
-        .where(eq(users.id, userId));
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          plan: true,
+        },
+      });
 
       if (!user) {
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
@@ -231,10 +238,9 @@ export const transformationsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [seed] = await db
-        .select()
-        .from(seeds)
-        .where(eq(seeds.id, input.seedId));
+      const seed = await db.query.seeds.findFirst({
+        where: eq(seeds.id, input.seedId),
+      });
 
       if (!seed || seed.userId !== ctx.session.user.id) {
         throw new Error("Seed not found");
@@ -347,10 +353,12 @@ export const transformationsRouter = router({
       const { id, tone, length, persona } = input;
       const userId = ctx.session.user.id;
 
-      const [user] = await db
-        .select({ plan: users.plan })
-        .from(users)
-        .where(eq(users.id, userId));
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          plan: true,
+        },
+      });
 
       if (!user) {
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });

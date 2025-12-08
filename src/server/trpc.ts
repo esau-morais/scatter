@@ -1,12 +1,24 @@
 import { initTRPC, TRPCError } from "@trpc/server";
+import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import superjson from "superjson";
-import type { db } from "@/db";
-import type { Session } from "@/lib/auth";
+import { db } from "@/db";
+import { auth } from "@/lib/auth";
+import { getFingerprint } from "./lib/fingerprint";
 
-export type Context = {
-  session: Session | null;
-  db: typeof db;
-};
+export async function createContext(opts: FetchCreateContextFnOptions) {
+  const session = await auth.api.getSession({
+    headers: opts.req.headers,
+  });
+
+  return {
+    session,
+    db,
+    headers: opts.req.headers,
+    fingerprint: getFingerprint(opts.req.headers),
+  };
+}
+
+export type Context = Awaited<ReturnType<typeof createContext>>;
 
 const t = initTRPC.context<Context>().create({
   transformer: superjson,

@@ -95,7 +95,7 @@ export function StatsCards() {
               </div>
               <motion.div
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-lg bg-secondary transition-colors",
+                  "flex size-10 items-center justify-center rounded-lg bg-secondary transition-colors",
                   !hasData && "bg-secondary/50 text-muted-foreground/40",
                 )}
                 animate={
@@ -111,7 +111,7 @@ export function StatsCards() {
                   ease: "easeInOut",
                 }}
               >
-                <stat.icon className="h-5 w-5" />
+                <stat.icon className="size-5" />
               </motion.div>
             </div>
           </Card>

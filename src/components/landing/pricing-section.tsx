@@ -134,7 +134,7 @@ export function PricingSection() {
                       key={feature}
                       className="flex items-center gap-3 text-sm"
                     >
-                      <Check className="h-4 w-4 text-primary" />
+                      <Check className="size-4 text-primary" />
                       {feature}
                     </li>
                   ))}

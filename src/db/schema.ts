@@ -67,11 +67,17 @@ export const usageStats = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     month: timestamp("month").notNull(),
+    // Billable usage (counts against quota)
     seedsCreated: integer("seeds_created").notNull().default(0),
     transformationsCreated: integer("transformations_created")
       .notNull()
       .default(0),
     transformationsPosted: integer("transformations_posted")
+      .notNull()
+      .default(0),
+    // Free usage (demo content, doesn't count against quota)
+    freeSeedsCreated: integer("free_seeds_created").notNull().default(0),
+    freeTransformationsCreated: integer("free_transformations_created")
       .notNull()
       .default(0),
   },

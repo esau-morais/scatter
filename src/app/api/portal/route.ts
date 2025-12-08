@@ -15,11 +15,12 @@ export async function GET(_req: NextRequest) {
   }
 
   try {
-    const [currentUser] = await db
-      .select({ polarCustomerId: users.polarCustomerId })
-      .from(users)
-      .where(eq(users.id, session.user.id))
-      .limit(1);
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.id, session.user.id),
+      columns: {
+        polarCustomerId: true,
+      },
+    });
 
     if (!currentUser?.polarCustomerId) {
       return NextResponse.json({ error: "No customer found" }, { status: 404 });

@@ -14,11 +14,9 @@ export const waitlistRouter = router({
     .mutation(async ({ ctx, input }) => {
       const email = input.email.toLowerCase().trim();
 
-      const [existing] = await ctx.db
-        .select()
-        .from(waitlist)
-        .where(eq(waitlist.email, email))
-        .limit(1);
+      const existing = await ctx.db.query.waitlist.findFirst({
+        where: eq(waitlist.email, email),
+      });
 
       if (existing) {
         throw new TRPCError({

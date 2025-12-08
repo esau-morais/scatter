@@ -9,16 +9,17 @@ export function getStartOfMonth(date = new Date()) {
 export async function getCurrentMonthUsage(userId: string) {
   const month = getStartOfMonth();
 
-  const [stats] = await db
-    .select()
-    .from(usageStats)
-    .where(and(eq(usageStats.userId, userId), eq(usageStats.month, month)));
+  const stats = await db.query.usageStats.findFirst({
+    where: and(eq(usageStats.userId, userId), eq(usageStats.month, month)),
+  });
 
   return (
     stats ?? {
       seedsCreated: 0,
       transformationsCreated: 0,
       transformationsPosted: 0,
+      freeSeedsCreated: 0,
+      freeTransformationsCreated: 0,
     }
   );
 }

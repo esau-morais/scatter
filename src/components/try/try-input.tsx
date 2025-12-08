@@ -1,8 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, FileText, Settings2, Sparkles } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Settings2,
+  Sparkles,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
@@ -20,10 +27,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Linkedin, Tiktok, X } from "@/components/ui/svgs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Kbd, KbdGroup } from "../ui/kbd";
-import { Linkedin, Tiktok, X } from "../ui/svgs";
 
 const platforms = [
   { id: "x", name: "X Thread", Icon: X },
@@ -32,7 +38,7 @@ const platforms = [
   { id: "blog", name: "Blog Intro", Icon: FileText },
 ] as const;
 
-export const toneOptions = [
+const toneOptions = [
   {
     id: "professional",
     label: "Professional",
@@ -47,20 +53,13 @@ export const toneOptions = [
   },
 ] as const;
 
-export const lengthOptions = [
+const lengthOptions = [
   { id: "short", label: "Short" },
   { id: "medium", label: "Medium" },
   { id: "long", label: "Long" },
 ] as const;
 
-export type ToneType = (typeof toneOptions)[number]["id"];
-export type LengthType = (typeof lengthOptions)[number]["id"];
-
-export interface TransformOptions {
-  tone: ToneType;
-  length: LengthType;
-  persona: string;
-}
+const EXAMPLE_CONTENT = `The best marketing doesn't feel like marketing. It feels like a friend sharing something valuable. Stop selling. Start helping.`;
 
 const seedSchema = z.object({
   seed: z.string().trim().min(10, "Please enter at least 10 characters."),
@@ -72,26 +71,27 @@ const seedSchema = z.object({
 
 type SeedFormValues = z.infer<typeof seedSchema>;
 
-interface SeedInputProps {
-  onGenerate?: (
+interface TryInputProps {
+  onGenerate: (
     content: string,
     platforms: string[],
-    options: TransformOptions,
+    options: { tone: string; length: string; persona?: string },
   ) => void;
-  isGenerating?: boolean;
+  isGenerating: boolean;
+  hasUsedFreeTry: boolean;
 }
 
-export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
+export function TryInput({
+  onGenerate,
+  isGenerating,
+  hasUsedFreeTry,
+}: TryInputProps) {
   const [showOptions, setShowOptions] = useState(false);
-  const isMac =
-    typeof navigator !== "undefined" &&
-    /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
-  const modKey = isMac ? "⌘" : "Ctrl";
 
   const form = useForm<SeedFormValues>({
     resolver: zodResolver(seedSchema),
     defaultValues: {
-      seed: "",
+      seed: EXAMPLE_CONTENT,
       platforms: platforms.map((p) => p.id),
       tone: "professional",
       length: "medium",
@@ -110,10 +110,10 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
   const onSubmit = useCallback(
     (values: SeedFormValues) => {
       if (isGenerating) return;
-      onGenerate?.(values.seed, values.platforms, {
+      onGenerate(values.seed, values.platforms, {
         tone: values.tone,
         length: values.length,
-        persona: values.persona,
+        persona: values.persona || undefined,
       });
     },
     [onGenerate, isGenerating],
@@ -151,9 +151,8 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
               <FormItem className="mb-4">
                 <FormControl>
                   <Textarea
-                    placeholder="Drop your idea here... It can be a concept, voice note transcript, or rough draft. We'll transform it into platform-optimized content."
-                    className="min-h-60 resize-none border-border bg-secondary/50 font-mono text-sm leading-relaxed transition-all focus:bg-secondary/70"
-                    enterKeyHint="send"
+                    placeholder="Drop your idea here... It can be a concept, voice note transcript, or rough draft."
+                    className="min-h-48 resize-none border-border bg-secondary/50 font-mono text-sm leading-relaxed transition-all focus:bg-secondary/70"
                     {...field}
                   />
                 </FormControl>
@@ -180,7 +179,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                         name="platforms"
                         render={({ field }) => (
                           <Label
-                            htmlFor={`platform-${platform.id}`}
+                            htmlFor={`try-platform-${platform.id}`}
                             className={cn(
                               "group flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all",
                               isSelected
@@ -189,7 +188,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                             )}
                           >
                             <Checkbox
-                              id={`platform-${platform.id}`}
+                              id={`try-platform-${platform.id}`}
                               checked={isSelected}
                               onCheckedChange={(checked) => {
                                 const current = field.value;
@@ -293,7 +292,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                               {toneOptions.map((option) => (
                                 <Label
                                   key={option.id}
-                                  htmlFor={`tone-${option.id}`}
+                                  htmlFor={`try-tone-${option.id}`}
                                   className={cn(
                                     "flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs transition-all [&:has([data-state=checked])]:border-primary/50 [&:has([data-state=checked])]:bg-primary/10",
                                     "border-border bg-background text-muted-foreground hover:bg-secondary/50",
@@ -301,7 +300,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                                 >
                                   <RadioGroupItem
                                     value={option.id}
-                                    id={`tone-${option.id}`}
+                                    id={`try-tone-${option.id}`}
                                     className="sr-only"
                                   />
                                   <span className="flex flex-col">
@@ -337,7 +336,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                               {lengthOptions.map((option) => (
                                 <Label
                                   key={option.id}
-                                  htmlFor={`length-${option.id}`}
+                                  htmlFor={`try-length-${option.id}`}
                                   className={cn(
                                     "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-xs font-medium transition-all [&:has([data-state=checked])]:border-primary/50 [&:has([data-state=checked])]:bg-primary/10 [&:has([data-state=checked])]:text-foreground",
                                     "border-border bg-background text-muted-foreground hover:bg-secondary/50",
@@ -345,7 +344,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                                 >
                                   <RadioGroupItem
                                     value={option.id}
-                                    id={`length-${option.id}`}
+                                    id={`try-length-${option.id}`}
                                     className="sr-only"
                                   />
                                   {option.label}
@@ -367,7 +366,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. a startup founder, marketing expert, tech blogger..."
+                              placeholder="e.g. a startup founder, marketing expert..."
                               className="h-9 bg-background text-sm"
                               {...field}
                             />
@@ -381,7 +380,7 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
             </AnimatePresence>
           </div>
 
-          <footer className="space-y-2">
+          <footer className="space-y-3">
             <Button
               type="submit"
               className="w-full shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)]"
@@ -401,21 +400,29 @@ export function SeedInput({ onGenerate, isGenerating }: SeedInputProps) {
                   </motion.span>
                   Transforming...
                 </>
+              ) : hasUsedFreeTry ? (
+                <>
+                  <Sparkles className="mr-2 size-4" />
+                  Sign Up to Transform Again
+                </>
               ) : (
                 <>
                   <Sparkles className="mr-2 size-4" />
-                  Transform to {selectedPlatforms.length}{" "}
-                  {selectedPlatforms.length === 1 ? "Platform" : "Platforms"}
+                  Generate (1 Free)
                 </>
               )}
             </Button>
-            <p className="hidden text-center text-xs text-muted-foreground md:block">
-              Press{" "}
-              <KbdGroup>
-                <Kbd>{modKey}</Kbd> <span>+</span> <Kbd>Enter</Kbd>{" "}
-              </KbdGroup>
-              to transform
-            </p>
+
+            <Link href="/login?from=try" className="block">
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-muted-foreground"
+              >
+                Skip & Sign Up
+                <ChevronRight className="ml-1 size-4" />
+              </Button>
+            </Link>
           </footer>
         </Card>
       </form>

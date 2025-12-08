@@ -6,14 +6,11 @@ import {
   Copy,
   Expand,
   FileText,
-  RefreshCw,
-  Send,
   Sparkles,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -21,56 +18,19 @@ import {
   type PlatformType,
   platformConfig,
 } from "@/components/ui/platform-badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { Transformation } from "@/db/schema";
+import { Linkedin, Tiktok, X } from "@/components/ui/svgs";
+import type { GuestTransformation } from "@/lib/schemas/demo";
 import { cn } from "@/lib/utils";
-import { Linkedin, Tiktok } from "../ui/svgs";
-import { X } from "../ui/svgs/x";
 
-interface TransformOutputProps {
-  transformations: Transformation[];
+interface TryOutputProps {
+  transformations: GuestTransformation[];
   isGenerating: boolean;
-  onMarkAsPosted: (id: string, posted: boolean) => void;
-  onRegenerate?: (id: string) => void;
-  isRegenerating?: string | null;
 }
 
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[1, 2, 3, 4].map((i) => (
-        <Card
-          key={i}
-          className="border-border bg-secondary/50 p-4 backdrop-blur-sm"
-        >
-          <div className="flex items-start gap-3">
-            <Skeleton className="size-9 rounded-lg" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-3/4" />
-            </div>
-            <div className="flex gap-1">
-              <Skeleton className="size-8 rounded-md" />
-              <Skeleton className="size-8 rounded-md" />
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-export function TransformOutput({
-  transformations,
-  isGenerating,
-  onMarkAsPosted,
-  onRegenerate,
-  isRegenerating,
-}: TransformOutputProps) {
+export function TryOutput({ transformations, isGenerating }: TryOutputProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedTransformation, setExpandedTransformation] =
-    useState<Transformation | null>(null);
+    useState<GuestTransformation | null>(null);
 
   const handleCopy = (id: string, content: string, platformName: string) => {
     navigator.clipboard.writeText(content);
@@ -82,38 +42,33 @@ export function TransformOutput({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleMarkAsPosted = (
-    id: string,
-    posted: boolean,
-    platformName: string,
-  ) => {
-    onMarkAsPosted(id, posted);
-    if (posted) {
-      toast.success(`Marked ${platformName} as posted!`, {
-        description: "Keep up the great work 🎉",
-      });
-    }
-  };
-
-  const handleRegenerate = (id: string, platformName: string) => {
-    if (onRegenerate) {
-      onRegenerate(id);
-      toast.loading(`Regenerating ${platformName} content...`, {
-        id: `regenerate-${id}`,
-      });
-    }
-  };
-
   const getCharacterCount = (content: string) => content.length;
-
   const hasContent = transformations.length > 0;
 
   if (isGenerating && !hasContent) {
     return (
       <Card className="flex min-h-[400px] flex-col items-center justify-center border-border/50 bg-card/50 p-6 text-center backdrop-blur-sm">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5 motion-safe:animate-spin">
+        <motion.div
+          animate={{
+            rotate: 360,
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            rotate: {
+              duration: 2,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "linear",
+            },
+            scale: {
+              duration: 1.5,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            },
+          }}
+          className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5"
+        >
           <Sparkles className="size-8 text-primary" />
-        </div>
+        </motion.div>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -127,9 +82,33 @@ export function TransformOutput({
             15-20 seconds.
           </p>
           <div className="flex items-center justify-center gap-2">
-            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse" />
-            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse motion-safe:delay-200" />
-            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse motion-safe:delay-400" />
+            <motion.div
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{
+                duration: 1.5,
+                repeat: Number.POSITIVE_INFINITY,
+                delay: 0,
+              }}
+              className="size-2 rounded-full bg-primary"
+            />
+            <motion.div
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{
+                duration: 1.5,
+                repeat: Number.POSITIVE_INFINITY,
+                delay: 0.2,
+              }}
+              className="size-2 rounded-full bg-primary"
+            />
+            <motion.div
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{
+                duration: 1.5,
+                repeat: Number.POSITIVE_INFINITY,
+                delay: 0.4,
+              }}
+              className="size-2 rounded-full bg-primary"
+            />
           </div>
         </motion.div>
       </Card>
@@ -145,30 +124,39 @@ export function TransformOutput({
             ? `Generated for ${transformations.length} ${
                 transformations.length === 1 ? "platform" : "platforms"
               }`
-            : "Select platforms and transform your content"}
+            : "Your generated content will appear here"}
         </p>
       </div>
 
       {!hasContent ? (
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-secondary/30 via-secondary/20 to-background/50 p-8 text-center">
-          <div className="relative mb-6 motion-safe:animate-bounce">
+          <motion.div
+            animate={{
+              y: [0, -10, 0],
+              scale: [1, 1.05, 1],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+            className="relative mb-6"
+          >
             <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" />
             <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/30 to-primary/10 ring-4 ring-primary/10">
               <Sparkles className="size-10 text-primary" />
             </div>
-          </div>
+          </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h3 className="mb-3 text-xl font-bold">
-              Your Content Will Appear Here
-            </h3>
+            <h3 className="mb-3 text-xl font-bold">Ready to Transform</h3>
             <p className="mb-6 max-w-md text-sm text-muted-foreground leading-relaxed">
-              Write your core idea on the left, select platforms, and click{" "}
-              <span className="font-semibold text-foreground">Transform</span>.
-              We'll generate optimized content for each platform in seconds.
+              We've pre-filled an example idea for you. Hit{" "}
+              <span className="font-semibold text-foreground">Generate</span> to
+              see the magic happen!
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
@@ -190,15 +178,12 @@ export function TransformOutput({
             </div>
           </motion.div>
         </div>
-      ) : isGenerating ? (
-        <LoadingSkeleton />
       ) : (
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
             {transformations.map((transformation, i) => {
               const platform = transformation.platform as PlatformType;
               const config = platformConfig[platform];
-              const isPosted = transformation.postedAt !== null;
               const charCount = getCharacterCount(transformation.content);
               const isNearLimit = charCount > config.maxChars * 0.9;
               const isOverLimit = charCount > config.maxChars;
@@ -211,26 +196,13 @@ export function TransformOutput({
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: i * 0.08, duration: 0.3 }}
                 >
-                  <Card
-                    className={cn(
-                      "group relative overflow-hidden border-border bg-secondary/50 p-4 transition-all hover:border-border hover:bg-secondary/70",
-                      isPosted && "bg-secondary/30",
-                    )}
-                  >
+                  <Card className="group relative overflow-hidden border-border bg-secondary/50 p-4 transition-all hover:border-border hover:bg-secondary/70">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex flex-1 items-start gap-3">
                         <PlatformBadge platform={platform} />
                         <div className="flex-1 min-w-0">
                           <div className="mb-2 flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-medium">{config.name}</p>
-                            {isPosted && (
-                              <Badge
-                                variant="outline"
-                                className="border-success/50 text-success text-xs"
-                              >
-                                Posted
-                              </Badge>
-                            )}
                             <span
                               className={cn(
                                 "ml-auto text-xs tabular-nums",
@@ -244,36 +216,12 @@ export function TransformOutput({
                               {charCount}/{config.maxChars}
                             </span>
                           </div>
-                          <p
-                            className={cn(
-                              "line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap wrap-break-word",
-                              isPosted && "opacity-70",
-                            )}
-                          >
+                          <p className="line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap wrap-break-word">
                             {transformation.content}
                           </p>
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        {onRegenerate && (
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            className="size-8 transition-all hover:bg-primary/10"
-                            onClick={() =>
-                              handleRegenerate(transformation.id, config.name)
-                            }
-                            disabled={isRegenerating === transformation.id}
-                          >
-                            <RefreshCw
-                              className={cn(
-                                "size-4",
-                                isRegenerating === transformation.id &&
-                                  "animate-spin motion-reduce:animate-none",
-                              )}
-                            />
-                          </Button>
-                        )}
                         <Button
                           size="icon-sm"
                           variant="ghost"
@@ -283,28 +231,6 @@ export function TransformOutput({
                           }
                         >
                           <Expand className="size-4" />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          className={cn(
-                            "size-8 transition-all",
-                            isPosted && "bg-success/10",
-                          )}
-                          onClick={() =>
-                            handleMarkAsPosted(
-                              transformation.id,
-                              !isPosted,
-                              config.name,
-                            )
-                          }
-                        >
-                          <Send
-                            className={cn(
-                              "size-4 transition-colors",
-                              isPosted && "text-success",
-                            )}
-                          />
                         </Button>
                         <Button
                           size="icon-sm"
@@ -415,22 +341,6 @@ export function TransformOutput({
                     </div>
 
                     <div className="flex items-center justify-end gap-2 border-t border-border p-4">
-                      {onRegenerate && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            handleRegenerate(
-                              expandedTransformation.id,
-                              config.name,
-                            );
-                            setExpandedTransformation(null);
-                          }}
-                        >
-                          <RefreshCw className="mr-2 size-4" />
-                          Regenerate
-                        </Button>
-                      )}
                       <Button
                         size="sm"
                         onClick={() => {

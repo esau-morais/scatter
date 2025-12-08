@@ -2,9 +2,11 @@
 
 import { Check, FileText, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { WaitlistForm } from "@/components/waitlist/waitlist-form";
+import { cn } from "@/lib/utils";
 import { Linkedin, Tiktok, X } from "../ui/svgs";
 
 const platforms = [
@@ -34,7 +36,7 @@ export function HeroSection() {
             variant="secondary"
             className="mb-6 border-primary/30 bg-primary/10 text-primary"
           >
-            <Sparkles className="mr-1.5 h-3 w-3" />
+            <Sparkles className="mr-1.5 size-3" />
             Built for creators who hate busywork
           </Badge>
         </motion.div>
@@ -47,7 +49,7 @@ export function HeroSection() {
         >
           Write once.
           <br />
-          <span className="bg-linear-to-br from-primary via-[oklch(0.8_0.18_50)] to-primary bg-size-[200%_auto] animate-gradient bg-clip-text text-transparent drop-shadow-[0_0_30px_oklch(0.72_0.19_30/50%)]">
+          <span className="bg-linear-to-br from-primary via-[oklch(0.8_0.18_50)] to-primary bg-size-[200%_auto] animate-gradient motion-reduce:animate-none bg-clip-text text-transparent drop-shadow-[0_0_30px_oklch(0.72_0.19_30/50%)]">
             Scatter everywhere.
           </span>
         </motion.h1>
@@ -73,17 +75,16 @@ export function HeroSection() {
           transition={{ delay: 0.4 }}
         >
           <WaitlistForm variant="hero" />
-          <Button
-            variant="ghost"
-            className="text-muted-foreground hover:text-foreground"
-            onClick={() =>
-              document
-                .getElementById("how-it-works")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
+          <Link
+            href="/try"
+            className={cn(
+              "w-full shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)] sm:w-auto",
+              buttonVariants({ size: "lg", variant: "outline" }),
+            )}
           >
-            See How It Works ↓
-          </Button>
+            <Sparkles className="mr-2 size-4" />
+            Try It Free
+          </Link>
         </motion.div>
 
         <motion.div
@@ -121,9 +122,9 @@ export function HeroSection() {
       >
         <div className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] rounded-2xl border border-border/50 bg-card/80 p-6 backdrop-blur-sm">
           <div className="mb-4 flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-red-500/80" />
-            <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-            <div className="h-3 w-3 rounded-full bg-green-500/80" />
+            <div className="size-3 rounded-full bg-red-500/80" />
+            <div className="size-3 rounded-full bg-yellow-500/80" />
+            <div className="size-3 rounded-full bg-green-500/80" />
             <span className="ml-4 text-sm text-muted-foreground">
               scatter.app
             </span>
@@ -150,8 +151,8 @@ export function HeroSection() {
                 >
                   <platform.Icon className="size-4" />
                   <span className="flex-1 text-sm">{platform.name}</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10">
-                    <Check className="h-3 w-3 text-primary" />
+                  <div className="flex size-6 items-center justify-center rounded bg-primary/10">
+                    <Check className="size-3 text-primary" />
                   </div>
                 </motion.div>
               ))}
