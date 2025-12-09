@@ -527,13 +527,19 @@ export const transformationsRouter = router({
       });
 
       const updated = await db.transaction(async (tx) => {
-        await saveVersion(id, existing.content, "ai_generated", tx);
+        await saveVersion(
+          id,
+          existing.content,
+          existing.editedAt ? "manual_edit" : "ai_generated",
+          tx,
+        );
 
         const [result] = await tx
           .update(transformations)
           .set({
             content: generated.content,
             postedAt: null,
+            editedAt: null,
           })
           .where(eq(transformations.id, id))
           .returning();
@@ -596,7 +602,12 @@ export const transformationsRouter = router({
       const wasPosted = !!existing.postedAt;
 
       const updated = await db.transaction(async (tx) => {
-        await saveVersion(id, existing.content, "manual_edit", tx);
+        await saveVersion(
+          id,
+          existing.content,
+          existing.editedAt ? "manual_edit" : "ai_generated",
+          tx,
+        );
 
         const [result] = await tx
           .update(transformations)
@@ -713,7 +724,7 @@ export const transformationsRouter = router({
         await saveVersion(
           transformationId,
           transformation.content,
-          "manual_edit",
+          transformation.editedAt ? "manual_edit" : "ai_generated",
           tx,
         );
 

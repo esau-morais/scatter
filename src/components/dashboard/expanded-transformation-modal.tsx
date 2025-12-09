@@ -350,8 +350,18 @@ export function ExpandedTransformationModal({
                 <div className="overflow-auto flex-1 min-h-0 p-4">
                   <div className="space-y-2">
                     {versionHistory.versions.map((version) => {
-                      const isCurrent =
+                      const contentMatches =
                         version.content === versionHistory.current.content;
+                      const isCurrent = contentMatches
+                        ? versionHistory.versions
+                            .filter(
+                              (v) =>
+                                v.content === versionHistory.current.content,
+                            )
+                            .every(
+                              (v) => v.versionNumber <= version.versionNumber,
+                            )
+                        : false;
                       return (
                         <motion.div
                           key={version.id}

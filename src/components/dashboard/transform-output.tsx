@@ -16,9 +16,9 @@ interface TransformOutputProps {
   transformations: Transformation[];
   isGenerating: boolean;
   onMarkAsPosted: (id: string, posted: boolean) => void;
-  onRegenerate?: (id: string) => void;
-  isRegenerating?: string | null;
-  onUpdateContent?: (id: string, content: string) => Promise<void>;
+  onRegenerate: (id: string) => void;
+  isRegenerating: string | null;
+  onUpdateContent: (id: string, content: string) => Promise<void>;
 }
 
 function LoadingSkeleton() {
@@ -154,7 +154,7 @@ export function TransformOutput({
   };
 
   const handleRegenerate = (id: string, platformName: string) => {
-    onRegenerate?.(id);
+    onRegenerate(id);
     toast.loading(`Regenerating ${platformName} content...`, {
       id: `regenerate-${id}`,
     });
