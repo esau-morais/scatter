@@ -270,15 +270,6 @@ export const transformationsRouter = router({
           .values(transformationsToInsert)
           .returning();
 
-        for (const transformation of savedTransformations) {
-          await saveVersion(
-            transformation.id,
-            transformation.content,
-            "ai_generated",
-            tx,
-          );
-        }
-
         await tx
           .insert(usageStats)
           .values({
