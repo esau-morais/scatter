@@ -7,7 +7,6 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { OnboardingBanner } from "@/components/dashboard/onboarding-banner";
-import { RecentSeeds } from "@/components/dashboard/recent-seeds";
 import { SaveDemoPrompt } from "@/components/dashboard/save-demo-prompt";
 import {
   SeedInput,
@@ -32,7 +31,6 @@ export function DashboardClient() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const seedsListOptions = trpc.seeds.list.queryOptions();
-  const { data: seedHistory = [] } = useQuery(seedsListOptions);
   const { data: dashboardData } = useQuery(
     trpc.transformations.getDashboardData.queryOptions(),
   );
@@ -43,7 +41,6 @@ export function DashboardClient() {
   const [pendingDemo, setPendingDemo] = useState<DemoResult | null>(null);
 
   const searchParams = useSearchParams();
-  const view = searchParams.get("view");
   const fromParam = searchParams.get("from");
 
   // Check for pending demo from /try page
@@ -63,7 +60,6 @@ export function DashboardClient() {
     }
   }, [fromParam]);
 
-  // Save demo mutation
   const saveDemoMutation = useMutation(
     trpc.onboarding.saveDemo.mutationOptions({
       onSuccess: async (data) => {
@@ -71,7 +67,6 @@ export function DashboardClient() {
         clearDemoFromStorage();
         setLatestGeneration(data);
 
-        // Update cache
         const currentHistory =
           queryClient.getQueryData(seedsListOptions.queryKey) ?? [];
         queryClient.setQueryData(seedsListOptions.queryKey, [
@@ -118,14 +113,13 @@ export function DashboardClient() {
       onSuccess: async (data) => {
         setLatestGeneration(data);
         const currentHistory =
-          queryClient.getQueryData(seedsListOptions.queryKey) ?? [];
+          queryClient.getQueryData<SeedHistoryItem[]>(
+            seedsListOptions.queryKey,
+          ) ?? [];
         if (currentHistory.length === 0) {
           await confetti();
         }
-        queryClient.setQueryData(seedsListOptions.queryKey, [
-          data,
-          ...currentHistory,
-        ]);
+        queryClient.invalidateQueries(seedsListOptions);
         queryClient.invalidateQueries(
           trpc.transformations.getDashboardData.queryOptions(),
         );
@@ -172,27 +166,6 @@ export function DashboardClient() {
             ),
           };
         });
-      },
-    }),
-  );
-
-  const deleteSeedMutation = useMutation(
-    trpc.seeds.delete.mutationOptions({
-      onSuccess: (_, variables) => {
-        const currentHistory =
-          queryClient.getQueryData<SeedHistoryItem[]>(
-            seedsListOptions.queryKey,
-          ) ?? [];
-        queryClient.setQueryData(
-          seedsListOptions.queryKey,
-          currentHistory.filter((item) => item.seed.id !== variables.id),
-        );
-        queryClient.invalidateQueries(
-          trpc.transformations.getDashboardData.queryOptions(),
-        );
-        if (latestGeneration?.seed.id === variables.id) {
-          setLatestGeneration(null);
-        }
       },
     }),
   );
@@ -254,6 +227,45 @@ export function DashboardClient() {
     }),
   );
 
+  const updateContentMutation = useMutation(
+    trpc.transformations.updateContent.mutationOptions({
+      onSuccess: (updatedTransformation) => {
+        const currentHistory =
+          queryClient.getQueryData<SeedHistoryItem[]>(
+            seedsListOptions.queryKey,
+          ) ?? [];
+
+        const updatedHistory = currentHistory.map((item) => {
+          if (item.seed.id === updatedTransformation.seedId) {
+            return {
+              ...item,
+              transformations: item.transformations.map((t) =>
+                t.id === updatedTransformation.id ? updatedTransformation : t,
+              ),
+            };
+          }
+          return item;
+        });
+
+        queryClient.setQueryData(seedsListOptions.queryKey, updatedHistory);
+        queryClient.invalidateQueries(
+          trpc.transformations.getDashboardData.queryOptions(),
+        );
+
+        setLatestGeneration((prev) => {
+          if (!prev || prev.seed.id !== updatedTransformation.seedId)
+            return prev;
+          return {
+            ...prev,
+            transformations: prev.transformations.map((t) =>
+              t.id === updatedTransformation.id ? updatedTransformation : t,
+            ),
+          };
+        });
+      },
+    }),
+  );
+
   const handleGenerate = (
     content: string,
     platforms: string[],
@@ -273,13 +285,13 @@ export function DashboardClient() {
     markAsPostedMutation.mutate({ id, posted });
   };
 
-  const handleDeleteSeed = (id: string) => {
-    deleteSeedMutation.mutate({ id });
-  };
-
   const handleRegenerate = (id: string) => {
     setRegeneratingId(id);
     regenerateMutation.mutate({ id });
+  };
+
+  const handleUpdateContent = async (id: string, content: string) => {
+    await updateContentMutation.mutateAsync({ id, content });
   };
 
   return (
@@ -291,56 +303,45 @@ export function DashboardClient() {
       </div>
 
       <main className="relative z-20 mx-auto max-w-7xl px-6 py-8">
-        {!view ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
-          >
-            <AnimatePresence>
-              {pendingDemo && (
-                <SaveDemoPrompt
-                  transformationCount={pendingDemo.transformations.length}
-                  onSave={handleSaveDemo}
-                  onDismiss={handleDismissDemo}
-                  isSaving={saveDemoMutation.isPending}
-                />
-              )}
-            </AnimatePresence>
-            <AnimatePresence>
-              {showOnboarding && !pendingDemo && (
-                <OnboardingBanner
-                  remaining={dashboardData?.remaining}
-                  onDismiss={handleDismissOnboarding}
-                />
-              )}
-            </AnimatePresence>
-            <StatsCards />
-            <div className="grid gap-6 lg:grid-cols-2">
-              <SeedInput
-                onGenerate={handleGenerate}
-                isGenerating={generateMutation.isPending}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-8"
+        >
+          <AnimatePresence>
+            {pendingDemo && (
+              <SaveDemoPrompt
+                transformationCount={pendingDemo.transformations.length}
+                onSave={handleSaveDemo}
+                onDismiss={handleDismissDemo}
+                isSaving={saveDemoMutation.isPending}
               />
-              <TransformOutput
-                transformations={latestGeneration?.transformations ?? []}
-                isGenerating={generateMutation.isPending}
-                onMarkAsPosted={handleMarkAsPosted}
-                onRegenerate={handleRegenerate}
-                isRegenerating={regeneratingId}
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {showOnboarding && !pendingDemo && (
+              <OnboardingBanner
+                remaining={dashboardData?.remaining}
+                onDismiss={handleDismissOnboarding}
               />
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <RecentSeeds
-              history={seedHistory}
-              onDeleteSeed={handleDeleteSeed}
+            )}
+          </AnimatePresence>
+          <StatsCards />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SeedInput
+              onGenerate={handleGenerate}
+              isGenerating={generateMutation.isPending}
             />
-          </motion.div>
-        )}
+            <TransformOutput
+              transformations={latestGeneration?.transformations ?? []}
+              isGenerating={generateMutation.isPending}
+              onMarkAsPosted={handleMarkAsPosted}
+              onRegenerate={handleRegenerate}
+              isRegenerating={regeneratingId}
+              onUpdateContent={handleUpdateContent}
+            />
+          </div>
+        </motion.div>
       </main>
     </div>
   );

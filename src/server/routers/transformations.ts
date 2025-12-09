@@ -1,10 +1,15 @@
 import { google } from "@ai-sdk/google";
 import { TRPCError } from "@trpc/server";
 import { generateObject } from "ai";
-import { eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, max, not, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { seeds, transformations, usageStats } from "@/db/schema";
+import {
+  seeds,
+  transformations,
+  transformationVersions,
+  usageStats,
+} from "@/db/schema";
 import { users } from "@/lib/auth/auth-schema";
 import {
   getCurrentMonthUsage,
@@ -30,6 +35,65 @@ const lengthDescriptions: Record<string, string> = {
   medium: "Balance depth with readability. Cover main points with some detail.",
   long: "Be thorough and detailed. Provide comprehensive coverage of the topic.",
 };
+
+const MAX_VERSIONS = 10;
+
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[number];
+
+async function getMaxVersion(
+  transformationId: string,
+  tx: Transaction,
+): Promise<number> {
+  const result = await tx
+    .select({
+      max: max(transformationVersions.versionNumber),
+    })
+    .from(transformationVersions)
+    .where(eq(transformationVersions.transformationId, transformationId));
+
+  return result[0]?.max ?? 0;
+}
+
+async function saveVersion(
+  transformationId: string,
+  content: string,
+  source: "ai_generated" | "manual_edit",
+  tx: Transaction,
+): Promise<void> {
+  const nextVersion = (await getMaxVersion(transformationId, tx)) + 1;
+
+  await tx.insert(transformationVersions).values({
+    transformationId,
+    content,
+    versionNumber: nextVersion,
+    source,
+  });
+}
+
+async function deleteOldVersions(
+  transformationId: string,
+  maxVersions: number,
+  tx: Transaction,
+): Promise<void> {
+  const versionsToKeep = await tx
+    .select({ id: transformationVersions.id })
+    .from(transformationVersions)
+    .where(eq(transformationVersions.transformationId, transformationId))
+    .orderBy(desc(transformationVersions.versionNumber))
+    .limit(maxVersions);
+
+  if (versionsToKeep.length >= maxVersions) {
+    const keepIds = versionsToKeep.map((v) => v.id);
+    await tx
+      .delete(transformationVersions)
+      .where(
+        and(
+          eq(transformationVersions.transformationId, transformationId),
+          not(inArray(transformationVersions.id, keepIds)),
+        ),
+      );
+  }
+}
 
 export const transformationsRouter = router({
   getDashboardData: protectedProcedure.query(async ({ ctx }) => {
@@ -205,6 +269,15 @@ export const transformationsRouter = router({
           .insert(transformations)
           .values(transformationsToInsert)
           .returning();
+
+        for (const transformation of savedTransformations) {
+          await saveVersion(
+            transformation.id,
+            transformation.content,
+            "ai_generated",
+            tx,
+          );
+        }
 
         await tx
           .insert(usageStats)
@@ -454,6 +527,8 @@ export const transformationsRouter = router({
       });
 
       const updated = await db.transaction(async (tx) => {
+        await saveVersion(id, existing.content, "ai_generated", tx);
+
         const [result] = await tx
           .update(transformations)
           .set({
@@ -462,6 +537,8 @@ export const transformationsRouter = router({
           })
           .where(eq(transformations.id, id))
           .returning();
+
+        await deleteOldVersions(id, MAX_VERSIONS, tx);
 
         const month = getStartOfMonth();
         const postedDelta = wasPosted ? -1 : 0;
@@ -482,6 +559,194 @@ export const transformationsRouter = router({
               transformationsPosted: sql`GREATEST(0, ${usageStats.transformationsPosted} + ${postedDelta})`,
             },
           });
+
+        return result;
+      });
+
+      return updated;
+    }),
+
+  updateContent: protectedProcedure
+    .input(
+      z.object({
+        id: z.uuid(),
+        content: z.string().min(1, {
+          message: "Content cannot be empty.",
+        }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, content } = input;
+      const userId = ctx.session.user.id;
+
+      const existing = await db.query.transformations.findFirst({
+        where: eq(transformations.id, id),
+        with: {
+          seed: true,
+        },
+      });
+
+      if (!existing || existing.seed.userId !== userId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Transformation not found",
+        });
+      }
+
+      const wasPosted = !!existing.postedAt;
+
+      const updated = await db.transaction(async (tx) => {
+        await saveVersion(id, existing.content, "manual_edit", tx);
+
+        const [result] = await tx
+          .update(transformations)
+          .set({
+            content,
+            editedAt: new Date(),
+            postedAt: null,
+          })
+          .where(eq(transformations.id, id))
+          .returning();
+
+        await deleteOldVersions(id, MAX_VERSIONS, tx);
+
+        if (wasPosted) {
+          const month = getStartOfMonth();
+          await tx
+            .insert(usageStats)
+            .values({
+              userId,
+              month,
+              seedsCreated: 0,
+              transformationsCreated: 0,
+              transformationsPosted: -1,
+            })
+            .onConflictDoUpdate({
+              target: [usageStats.userId, usageStats.month],
+              set: {
+                transformationsPosted: sql`GREATEST(0, ${usageStats.transformationsPosted} - 1)`,
+              },
+            });
+        }
+
+        return result;
+      });
+
+      return updated;
+    }),
+
+  getVersionHistory: protectedProcedure
+    .input(z.object({ transformationId: z.uuid() }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const transformation = await db.query.transformations.findFirst({
+        where: eq(transformations.id, input.transformationId),
+        with: {
+          seed: true,
+        },
+      });
+
+      if (!transformation || transformation.seed.userId !== userId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Transformation not found",
+        });
+      }
+
+      const versions = await db
+        .select()
+        .from(transformationVersions)
+        .where(
+          eq(transformationVersions.transformationId, input.transformationId),
+        )
+        .orderBy(desc(transformationVersions.versionNumber));
+
+      return {
+        current: transformation,
+        versions,
+      };
+    }),
+
+  restoreVersion: protectedProcedure
+    .input(
+      z.object({
+        transformationId: z.uuid(),
+        versionNumber: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { transformationId, versionNumber } = input;
+      const userId = ctx.session.user.id;
+
+      const transformation = await db.query.transformations.findFirst({
+        where: eq(transformations.id, transformationId),
+        with: {
+          seed: true,
+        },
+      });
+
+      if (!transformation || transformation.seed.userId !== userId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Transformation not found",
+        });
+      }
+
+      const version = await db.query.transformationVersions.findFirst({
+        where: and(
+          eq(transformationVersions.transformationId, transformationId),
+          eq(transformationVersions.versionNumber, versionNumber),
+        ),
+      });
+
+      if (!version) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Version not found",
+        });
+      }
+
+      const wasPosted = !!transformation.postedAt;
+
+      const updated = await db.transaction(async (tx) => {
+        await saveVersion(
+          transformationId,
+          transformation.content,
+          "manual_edit",
+          tx,
+        );
+
+        const [result] = await tx
+          .update(transformations)
+          .set({
+            content: version.content,
+            editedAt: new Date(),
+            postedAt: null,
+          })
+          .where(eq(transformations.id, transformationId))
+          .returning();
+
+        await deleteOldVersions(transformationId, MAX_VERSIONS, tx);
+
+        if (wasPosted) {
+          const month = getStartOfMonth();
+          await tx
+            .insert(usageStats)
+            .values({
+              userId,
+              month,
+              seedsCreated: 0,
+              transformationsCreated: 0,
+              transformationsPosted: -1,
+            })
+            .onConflictDoUpdate({
+              target: [usageStats.userId, usageStats.month],
+              set: {
+                transformationsPosted: sql`GREATEST(0, ${usageStats.transformationsPosted} - 1)`,
+              },
+            });
+        }
 
         return result;
       });

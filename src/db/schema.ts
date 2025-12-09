@@ -19,6 +19,11 @@ export const platformEnum = pgEnum("platform", [
   "blog",
 ]);
 
+export const versionSourceEnum = pgEnum("version_source", [
+  "ai_generated",
+  "manual_edit",
+]);
+
 export const seeds = pgTable(
   "seeds",
   {
@@ -47,9 +52,29 @@ export const transformations = pgTable(
     platform: platformEnum("platform").notNull(),
     content: text("content").notNull(),
     postedAt: timestamp("posted_at"),
+    editedAt: timestamp("edited_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [index("transformations_seed_id_idx").on(table.seedId)],
+);
+
+export const transformationVersions = pgTable(
+  "transformation_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    transformationId: uuid("transformation_id")
+      .notNull()
+      .references(() => transformations.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    versionNumber: integer("version_number").notNull(),
+    source: versionSourceEnum("source").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("transformation_versions_transformation_id_idx").on(
+      table.transformationId,
+    ),
+  ],
 );
 
 export const waitlist = pgTable("waitlist", {
@@ -92,10 +117,21 @@ export const seedsRelations = relations(seeds, ({ many }) => ({
 
 export const transformationsRelations = relations(
   transformations,
-  ({ one }) => ({
+  ({ one, many }) => ({
     seed: one(seeds, {
       fields: [transformations.seedId],
       references: [seeds.id],
+    }),
+    versions: many(transformationVersions),
+  }),
+);
+
+export const transformationVersionsRelations = relations(
+  transformationVersions,
+  ({ one }) => ({
+    transformation: one(transformations, {
+      fields: [transformationVersions.transformationId],
+      references: [transformations.id],
     }),
   }),
 );
@@ -105,6 +141,10 @@ export type NewSeed = typeof seeds.$inferInsert;
 
 export type Transformation = typeof transformations.$inferSelect;
 export type NewTransformation = typeof transformations.$inferInsert;
+
+export type TransformationVersion = typeof transformationVersions.$inferSelect;
+export type NewTransformationVersion =
+  typeof transformationVersions.$inferInsert;
 
 export type Waitlist = typeof waitlist.$inferSelect;
 export type NewWaitlist = typeof waitlist.$inferInsert;

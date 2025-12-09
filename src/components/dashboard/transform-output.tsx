@@ -1,31 +1,16 @@
 "use client";
 
-import {
-  Check,
-  X as Close,
-  Copy,
-  Expand,
-  FileText,
-  RefreshCw,
-  Send,
-  Sparkles,
-} from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  PlatformBadge,
-  type PlatformType,
-  platformConfig,
-} from "@/components/ui/platform-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Transformation } from "@/db/schema";
-import { cn } from "@/lib/utils";
 import { Linkedin, Tiktok } from "../ui/svgs";
 import { X } from "../ui/svgs/x";
+import { ExpandedTransformationModal } from "./expanded-transformation-modal";
+import { TransformationCard } from "./transformation-card";
 
 interface TransformOutputProps {
   transformations: Transformation[];
@@ -33,6 +18,7 @@ interface TransformOutputProps {
   onMarkAsPosted: (id: string, posted: boolean) => void;
   onRegenerate?: (id: string) => void;
   isRegenerating?: string | null;
+  onUpdateContent?: (id: string, content: string) => Promise<void>;
 }
 
 function LoadingSkeleton() {
@@ -61,12 +47,84 @@ function LoadingSkeleton() {
   );
 }
 
+function EmptyState() {
+  return (
+    <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-secondary/30 via-secondary/20 to-background/50 p-8 text-center">
+      <div className="relative mb-6 motion-safe:animate-bounce">
+        <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" />
+        <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/30 to-primary/10 ring-4 ring-primary/10">
+          <Sparkles className="size-10 text-primary" />
+        </div>
+      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h3 className="mb-3 text-xl font-bold">
+          Your Content Will Appear Here
+        </h3>
+        <p className="mb-6 max-w-md text-sm text-muted-foreground leading-relaxed">
+          Write your core idea on the left, select platforms, and click{" "}
+          <span className="font-semibold text-foreground">Transform</span>.
+          We'll generate optimized content for each platform in seconds.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
+            <X className="size-3.5" />
+            <span>X Threads</span>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
+            <Linkedin className="size-3.5" />
+            <span>LinkedIn Posts</span>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
+            <Tiktok className="size-3.5" />
+            <span>TikTok Scripts</span>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
+            <FileText className="size-3.5 text-black dark:text-white" />
+            <span>Blog Intros</span>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function GeneratingState() {
+  return (
+    <Card className="flex min-h-[400px] flex-col items-center justify-center border-border/50 bg-card/50 p-6 text-center backdrop-blur-sm">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5 motion-safe:animate-spin">
+        <Sparkles className="size-8 text-primary" />
+      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h3 className="mb-2 text-lg font-semibold">Crafting your content...</h3>
+        <p className="mb-4 max-w-sm text-sm text-muted-foreground">
+          Our AI is generating platform-optimized content. This usually takes
+          15-20 seconds.
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse" />
+          <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse motion-safe:delay-200" />
+          <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse motion-safe:delay-400" />
+        </div>
+      </motion.div>
+    </Card>
+  );
+}
+
 export function TransformOutput({
   transformations,
   isGenerating,
   onMarkAsPosted,
   onRegenerate,
   isRegenerating,
+  onUpdateContent,
 }: TransformOutputProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedTransformation, setExpandedTransformation] =
@@ -96,44 +154,24 @@ export function TransformOutput({
   };
 
   const handleRegenerate = (id: string, platformName: string) => {
-    if (onRegenerate) {
-      onRegenerate(id);
-      toast.loading(`Regenerating ${platformName} content...`, {
-        id: `regenerate-${id}`,
-      });
-    }
+    onRegenerate?.(id);
+    toast.loading(`Regenerating ${platformName} content...`, {
+      id: `regenerate-${id}`,
+    });
   };
 
-  const getCharacterCount = (content: string) => content.length;
+  const handleExpand = (transformation: Transformation) => {
+    setExpandedTransformation(transformation);
+  };
+
+  const handleUpdateTransformation = (updated: Transformation) => {
+    setExpandedTransformation(updated);
+  };
 
   const hasContent = transformations.length > 0;
 
   if (isGenerating && !hasContent) {
-    return (
-      <Card className="flex min-h-[400px] flex-col items-center justify-center border-border/50 bg-card/50 p-6 text-center backdrop-blur-sm">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5 motion-safe:animate-spin">
-          <Sparkles className="size-8 text-primary" />
-        </div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h3 className="mb-2 text-lg font-semibold">
-            Crafting your content...
-          </h3>
-          <p className="mb-4 max-w-sm text-sm text-muted-foreground">
-            Our AI is generating platform-optimized content. This usually takes
-            15-20 seconds.
-          </p>
-          <div className="flex items-center justify-center gap-2">
-            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse" />
-            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse motion-safe:delay-200" />
-            <div className="size-2 rounded-full bg-primary motion-safe:animate-pulse motion-safe:delay-400" />
-          </div>
-        </motion.div>
-      </Card>
-    );
+    return <GeneratingState />;
   }
 
   return (
@@ -150,306 +188,38 @@ export function TransformOutput({
       </div>
 
       {!hasContent ? (
-        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-secondary/30 via-secondary/20 to-background/50 p-8 text-center">
-          <div className="relative mb-6 motion-safe:animate-bounce">
-            <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" />
-            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/30 to-primary/10 ring-4 ring-primary/10">
-              <Sparkles className="size-10 text-primary" />
-            </div>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h3 className="mb-3 text-xl font-bold">
-              Your Content Will Appear Here
-            </h3>
-            <p className="mb-6 max-w-md text-sm text-muted-foreground leading-relaxed">
-              Write your core idea on the left, select platforms, and click{" "}
-              <span className="font-semibold text-foreground">Transform</span>.
-              We'll generate optimized content for each platform in seconds.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
-                <X className="size-3.5" />
-                <span>X Threads</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
-                <Linkedin className="size-3.5" />
-                <span>LinkedIn Posts</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
-                <Tiktok className="size-3.5" />
-                <span>TikTok Scripts</span>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-3 py-1.5">
-                <FileText className="size-3.5 text-black dark:text-white" />
-                <span>Blog Intros</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+        <EmptyState />
       ) : isGenerating ? (
         <LoadingSkeleton />
       ) : (
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
-            {transformations.map((transformation, i) => {
-              const platform = transformation.platform as PlatformType;
-              const config = platformConfig[platform];
-              const isPosted = transformation.postedAt !== null;
-              const charCount = getCharacterCount(transformation.content);
-              const isNearLimit = charCount > config.maxChars * 0.9;
-              const isOverLimit = charCount > config.maxChars;
-
-              return (
-                <motion.div
-                  key={transformation.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: i * 0.08, duration: 0.3 }}
-                >
-                  <Card
-                    className={cn(
-                      "group relative overflow-hidden border-border bg-secondary/50 p-4 transition-all hover:border-border hover:bg-secondary/70",
-                      isPosted && "bg-secondary/30",
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex flex-1 items-start gap-3">
-                        <PlatformBadge platform={platform} />
-                        <div className="flex-1 min-w-0">
-                          <div className="mb-2 flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-medium">{config.name}</p>
-                            {isPosted && (
-                              <Badge
-                                variant="outline"
-                                className="border-success/50 text-success text-xs"
-                              >
-                                Posted
-                              </Badge>
-                            )}
-                            <span
-                              className={cn(
-                                "ml-auto text-xs tabular-nums",
-                                isOverLimit
-                                  ? "text-destructive font-medium"
-                                  : isNearLimit
-                                    ? "text-warning font-medium"
-                                    : "text-muted-foreground",
-                              )}
-                            >
-                              {charCount}/{config.maxChars}
-                            </span>
-                          </div>
-                          <p
-                            className={cn(
-                              "line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap wrap-break-word",
-                              isPosted && "opacity-70",
-                            )}
-                          >
-                            {transformation.content}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        {onRegenerate && (
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            className="size-8 transition-all hover:bg-primary/10"
-                            onClick={() =>
-                              handleRegenerate(transformation.id, config.name)
-                            }
-                            disabled={isRegenerating === transformation.id}
-                          >
-                            <RefreshCw
-                              className={cn(
-                                "size-4",
-                                isRegenerating === transformation.id &&
-                                  "animate-spin motion-reduce:animate-none",
-                              )}
-                            />
-                          </Button>
-                        )}
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          className="size-8 transition-all hover:bg-secondary"
-                          onClick={() =>
-                            setExpandedTransformation(transformation)
-                          }
-                        >
-                          <Expand className="size-4" />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          className={cn(
-                            "size-8 transition-all",
-                            isPosted && "bg-success/10",
-                          )}
-                          onClick={() =>
-                            handleMarkAsPosted(
-                              transformation.id,
-                              !isPosted,
-                              config.name,
-                            )
-                          }
-                        >
-                          <Send
-                            className={cn(
-                              "size-4 transition-colors",
-                              isPosted && "text-success",
-                            )}
-                          />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          className="size-8 transition-all hover:bg-primary/10"
-                          onClick={() =>
-                            handleCopy(
-                              transformation.id,
-                              transformation.content,
-                              config.name,
-                            )
-                          }
-                        >
-                          <AnimatePresence mode="wait">
-                            {copiedId === transformation.id ? (
-                              <motion.div
-                                key="check"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                exit={{ scale: 0 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <Check className="size-4 text-success" />
-                              </motion.div>
-                            ) : (
-                              <motion.div
-                                key="copy"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                exit={{ scale: 0 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <Copy className="size-4" />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              );
-            })}
+            {transformations.map((transformation, i) => (
+              <TransformationCard
+                key={transformation.id}
+                transformation={transformation}
+                index={i}
+                copiedId={copiedId}
+                isRegenerating={isRegenerating ?? null}
+                onCopy={handleCopy}
+                onExpand={handleExpand}
+                onMarkAsPosted={handleMarkAsPosted}
+                onRegenerate={handleRegenerate}
+              />
+            ))}
           </AnimatePresence>
         </div>
       )}
 
       <AnimatePresence>
         {expandedTransformation && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
-            onClick={() => setExpandedTransformation(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {(() => {
-                const platform =
-                  expandedTransformation.platform as PlatformType;
-                const config = platformConfig[platform];
-                const charCount = getCharacterCount(
-                  expandedTransformation.content,
-                );
-                const isOverLimit = charCount > config.maxChars;
-                const isNearLimit = charCount > config.maxChars * 0.9;
-
-                return (
-                  <>
-                    <div className="flex items-center justify-between border-b border-border p-4">
-                      <div className="flex items-center gap-3">
-                        <PlatformBadge platform={platform} />
-                        <div>
-                          <h3 className="font-semibold">{config.name}</h3>
-                          <span
-                            className={cn(
-                              "text-xs tabular-nums",
-                              isOverLimit
-                                ? "text-destructive font-medium"
-                                : isNearLimit
-                                  ? "text-warning font-medium"
-                                  : "text-muted-foreground",
-                            )}
-                          >
-                            {charCount}/{config.maxChars} characters
-                          </span>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setExpandedTransformation(null)}
-                      >
-                        <Close className="size-4" />
-                      </Button>
-                    </div>
-
-                    <div className="overflow-auto max-h-[60vh] p-6">
-                      <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
-                        {expandedTransformation.content}
-                      </pre>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 border-t border-border p-4">
-                      {onRegenerate && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            handleRegenerate(
-                              expandedTransformation.id,
-                              config.name,
-                            );
-                            setExpandedTransformation(null);
-                          }}
-                        >
-                          <RefreshCw className="mr-2 size-4" />
-                          Regenerate
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          handleCopy(
-                            expandedTransformation.id,
-                            expandedTransformation.content,
-                            config.name,
-                          );
-                        }}
-                      >
-                        <Copy className="mr-2 size-4" />
-                        Copy Content
-                      </Button>
-                    </div>
-                  </>
-                );
-              })()}
-            </motion.div>
-          </motion.div>
+          <ExpandedTransformationModal
+            transformation={expandedTransformation}
+            onClose={() => setExpandedTransformation(null)}
+            onRegenerate={onRegenerate}
+            onUpdateContent={onUpdateContent}
+            onUpdateTransformation={handleUpdateTransformation}
+          />
         )}
       </AnimatePresence>
     </Card>

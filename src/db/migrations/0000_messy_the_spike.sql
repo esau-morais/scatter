@@ -1,4 +1,5 @@
 CREATE TYPE "public"."platform" AS ENUM('x', 'linkedin', 'tiktok', 'blog');--> statement-breakpoint
+CREATE TYPE "public"."version_source" AS ENUM('ai_generated', 'manual_edit');--> statement-breakpoint
 CREATE TYPE "public"."plan" AS ENUM('free', 'creator', 'pro');--> statement-breakpoint
 CREATE TABLE "seeds" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -9,12 +10,22 @@ CREATE TABLE "seeds" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "transformation_versions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"transformation_id" uuid NOT NULL,
+	"content" text NOT NULL,
+	"version_number" integer NOT NULL,
+	"source" "version_source" NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "transformations" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"seed_id" uuid NOT NULL,
 	"platform" "platform" NOT NULL,
 	"content" text NOT NULL,
 	"posted_at" timestamp,
+	"edited_at" timestamp,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -90,11 +101,13 @@ CREATE TABLE "verifications" (
 );
 --> statement-breakpoint
 ALTER TABLE "seeds" ADD CONSTRAINT "seeds_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "transformation_versions" ADD CONSTRAINT "transformation_versions_transformation_id_transformations_id_fk" FOREIGN KEY ("transformation_id") REFERENCES "public"."transformations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transformations" ADD CONSTRAINT "transformations_seed_id_seeds_id_fk" FOREIGN KEY ("seed_id") REFERENCES "public"."seeds"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "usage_stats" ADD CONSTRAINT "usage_stats_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "seeds_user_id_idx" ON "seeds" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "transformation_versions_transformation_id_idx" ON "transformation_versions" USING btree ("transformation_id");--> statement-breakpoint
 CREATE INDEX "transformations_seed_id_idx" ON "transformations" USING btree ("seed_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "usage_stats_user_month_idx" ON "usage_stats" USING btree ("user_id","month");--> statement-breakpoint
 CREATE INDEX "accounts_userId_idx" ON "accounts" USING btree ("user_id");--> statement-breakpoint
