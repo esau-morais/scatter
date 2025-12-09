@@ -24,6 +24,12 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     },
   },
+  account: {
+    // iOS/Safari blocks third-party cookies during OAuth redirects causing state mismatch.
+    // State is still verified via database, only the cookie check is skipped.
+    // See: https://www.better-auth.com/docs/errors/state_mismatch
+    skipStateCookieCheck: true,
+  },
   databaseHooks: {
     user: {
       create: {
