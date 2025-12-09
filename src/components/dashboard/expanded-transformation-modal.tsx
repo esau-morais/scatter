@@ -63,6 +63,8 @@ export function ExpandedTransformationModal({
   const restoreVersionMutation = useMutation(
     trpc.transformations.restoreVersion.mutationOptions({
       onSuccess: (updatedTransformation) => {
+        const draftKey = getDraftKey(updatedTransformation.id);
+        localStorage.removeItem(draftKey);
         onUpdateTransformation(updatedTransformation);
         setEditContent(updatedTransformation.content);
         setActiveTab("view");
@@ -119,6 +121,7 @@ export function ExpandedTransformationModal({
         ...transformation,
         content: editContent,
         editedAt: new Date(),
+        postedAt: null,
       });
       queryClient.invalidateQueries(
         trpc.transformations.getVersionHistory.queryOptions({
@@ -350,18 +353,12 @@ export function ExpandedTransformationModal({
                 <div className="overflow-auto flex-1 min-h-0 p-4">
                   <div className="space-y-2">
                     {versionHistory.versions.map((version) => {
-                      const contentMatches =
+                      const maxVersionNumber = Math.max(
+                        ...versionHistory.versions.map((v) => v.versionNumber),
+                      );
+                      const isCurrent =
+                        version.versionNumber === maxVersionNumber &&
                         version.content === versionHistory.current.content;
-                      const isCurrent = contentMatches
-                        ? versionHistory.versions
-                            .filter(
-                              (v) =>
-                                v.content === versionHistory.current.content,
-                            )
-                            .every(
-                              (v) => v.versionNumber <= version.versionNumber,
-                            )
-                        : false;
                       return (
                         <motion.div
                           key={version.id}

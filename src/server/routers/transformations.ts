@@ -630,7 +630,7 @@ export const transformationsRouter = router({
               month,
               seedsCreated: 0,
               transformationsCreated: 0,
-              transformationsPosted: -1,
+              transformationsPosted: 0,
             })
             .onConflictDoUpdate({
               target: [usageStats.userId, usageStats.month],
@@ -749,7 +749,7 @@ export const transformationsRouter = router({
               month,
               seedsCreated: 0,
               transformationsCreated: 0,
-              transformationsPosted: -1,
+              transformationsPosted: 0,
             })
             .onConflictDoUpdate({
               target: [usageStats.userId, usageStats.month],
