@@ -353,11 +353,7 @@ export function ExpandedTransformationModal({
                 <div className="overflow-auto flex-1 min-h-0 p-4">
                   <div className="space-y-2">
                     {versionHistory.versions.map((version) => {
-                      const maxVersionNumber = Math.max(
-                        ...versionHistory.versions.map((v) => v.versionNumber),
-                      );
                       const isCurrent =
-                        version.versionNumber === maxVersionNumber &&
                         version.content === versionHistory.current.content;
                       return (
                         <motion.div
