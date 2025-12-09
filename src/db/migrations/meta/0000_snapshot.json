@@ -1,5 +1,5 @@
 {
-  "id": "4df3c3e4-7b48-473f-8a47-e8e9511f3181",
+  "id": "24a831c6-a272-46ed-a332-37fa300f10e9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -82,6 +82,84 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.transformation_versions": {
+      "name": "transformation_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "transformation_id": {
+          "name": "transformation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_number": {
+          "name": "version_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "version_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "transformation_versions_transformation_id_idx": {
+          "name": "transformation_versions_transformation_id_idx",
+          "columns": [
+            {
+              "expression": "transformation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "transformation_versions_transformation_id_transformations_id_fk": {
+          "name": "transformation_versions_transformation_id_transformations_id_fk",
+          "tableFrom": "transformation_versions",
+          "tableTo": "transformations",
+          "columnsFrom": ["transformation_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.transformations": {
       "name": "transformations",
       "schema": "",
@@ -114,6 +192,12 @@
         },
         "posted_at": {
           "name": "posted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "edited_at": {
+          "name": "edited_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
@@ -681,6 +765,11 @@
       "name": "platform",
       "schema": "public",
       "values": ["x", "linkedin", "tiktok", "blog"]
+    },
+    "public.version_source": {
+      "name": "version_source",
+      "schema": "public",
+      "values": ["ai_generated", "manual_edit"]
     },
     "public.plan": {
       "name": "plan",

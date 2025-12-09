@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,10 +43,10 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
   const [platformFilter, setPlatformFilter] = useState<FilterPlatform>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const searchParams = useSearchParams();
 
   const filteredHistory = useMemo(() => {
     return history.filter((item) => {
-      // Search filter - check seed content and title
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesTitle = item.seed.title?.toLowerCase().includes(query);
@@ -58,7 +59,6 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
         }
       }
 
-      // Platform filter
       if (platformFilter !== "all") {
         const hasPlatform = item.transformations.some(
           (t) => t.platform === platformFilter,
@@ -66,7 +66,6 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
         if (!hasPlatform) return false;
       }
 
-      // Status filter
       if (statusFilter !== "all") {
         const hasPosted = item.transformations.some((t) => t.postedAt !== null);
         const allPosted = item.transformations.every(
@@ -299,7 +298,13 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
               </div>
             </div>
           </motion.div>
-          <Link href="/dashboard">
+          <Link
+            href={
+              searchParams.get("from")
+                ? `/dashboard?from=${searchParams.get("from")}`
+                : "/dashboard"
+            }
+          >
             <Button
               size="lg"
               className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)]"
