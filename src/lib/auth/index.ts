@@ -1,5 +1,6 @@
 import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { lastLoginMethod } from "better-auth/plugins";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { waitlist } from "@/db/schema";
@@ -24,6 +25,7 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     },
   },
+  plugins: [lastLoginMethod()],
   databaseHooks: {
     user: {
       create: {

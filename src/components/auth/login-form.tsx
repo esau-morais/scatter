@@ -3,10 +3,11 @@
 import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Github, Google } from "@/components/ui/svgs";
 import { authClient } from "@/lib/auth/auth-client";
+import { Badge } from "../ui/badge";
 
 export function LoginContainer({ children }: { children: ReactNode }) {
   return (
@@ -21,11 +22,17 @@ export function LoginContainer({ children }: { children: ReactNode }) {
   );
 }
 
+function LastUsedBadge() {
+  return <Badge className="absolute -top-2.5 -right-2.5">Last used</Badge>;
+}
+
 export function LoginForm() {
   const searchParams = useSearchParams();
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [isLoadingGithub, setIsLoadingGithub] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const lastMethod = useMemo(() => authClient.getLastUsedLoginMethod(), []);
 
   const fromParam = searchParams.get("from");
   const callbackURL = fromParam ? `/dashboard?from=${fromParam}` : "/dashboard";
@@ -74,33 +81,39 @@ export function LoginForm() {
 
   return (
     <div className="space-y-4">
-      <Button
-        variant="outline"
-        className="w-full h-12 text-base"
-        onClick={handleGoogleLogin}
-        disabled={isLoading}
-      >
-        {isLoadingGoogle ? (
-          <Loader2 className="mr-2 size-5 animate-spin motion-reduce:animate-none" />
-        ) : (
-          <Google className="mr-2 size-5" />
-        )}
-        Continue with Google
-      </Button>
+      <div className="relative">
+        <Button
+          variant="outline"
+          className="w-full h-12 text-base"
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+        >
+          {isLoadingGoogle ? (
+            <Loader2 className="mr-2 size-5 animate-spin motion-reduce:animate-none" />
+          ) : (
+            <Google className="mr-2 size-5" />
+          )}
+          Continue with Google
+        </Button>
+        {lastMethod === "google" && <LastUsedBadge />}
+      </div>
 
-      <Button
-        variant="outline"
-        className="w-full h-12 text-base"
-        onClick={handleGithubLogin}
-        disabled={isLoading}
-      >
-        {isLoadingGithub ? (
-          <Loader2 className="mr-2 size-5 animate-spin motion-reduce:animate-none" />
-        ) : (
-          <Github className="mr-2 size-5" />
-        )}
-        Continue with GitHub
-      </Button>
+      <div className="relative">
+        <Button
+          variant="outline"
+          className="w-full h-12 text-base"
+          onClick={handleGithubLogin}
+          disabled={isLoading}
+        >
+          {isLoadingGithub ? (
+            <Loader2 className="mr-2 size-5 animate-spin motion-reduce:animate-none" />
+          ) : (
+            <Github className="mr-2 size-5" />
+          )}
+          Continue with GitHub
+        </Button>
+        {lastMethod === "github" && <LastUsedBadge />}
+      </div>
 
       {error && <p className="text-sm text-destructive text-center">{error}</p>}
     </div>
