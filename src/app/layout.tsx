@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://usescatter.app"),
   title: "Scatter – Write Once, Distribute Everywhere",
   description:
     "Transform your ideas into platform-perfect content for X, LinkedIn, TikTok, and more. One input, four outputs. Stop the content burnout.",

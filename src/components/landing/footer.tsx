@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Scatter } from "../ui/svgs";
 
 export function Footer() {
   return (
@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
         <div className="flex items-center gap-2">
           <div className="flex size-6 items-center justify-center rounded-md bg-primary">
-            <Sparkles className="size-3 text-primary-foreground" />
+            <Scatter className="size-3 text-primary-foreground" />
           </div>
           <span className="font-semibold">Scatter</span>
         </div>

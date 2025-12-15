@@ -1,8 +1,8 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
+import { Scatter } from "../ui/svgs";
 
 export function Navbar() {
   return (
@@ -14,7 +14,7 @@ export function Navbar() {
           className="flex items-center gap-2"
         >
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="size-4 text-primary-foreground" />
+            <Scatter className="size-4 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold tracking-tight">Scatter</span>
         </motion.div>

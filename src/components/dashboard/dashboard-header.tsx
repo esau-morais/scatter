@@ -6,6 +6,7 @@ import Link, { LinkProps } from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Tabs, TabsList } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { Scatter } from "../ui/svgs";
 
 export function DashboardHeader() {
   const pathname = usePathname();
@@ -26,7 +27,7 @@ export function DashboardHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <div className="flex items-center gap-2">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="size-4 text-primary-foreground" />
+            <Scatter className="size-4 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold tracking-tight">Scatter</span>
         </div>
