@@ -35,3 +35,5 @@ jobs:
           SKIP_ENV_VALIDATION: true
           POLAR_ACCESS_TOKEN: polar_test_access_token
           RESEND_API_KEY: re_test_api_key
+      - name: Test
+        run: bun run test
