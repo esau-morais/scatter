@@ -21,7 +21,6 @@ import {
   getDemoFromStorage,
 } from "@/lib/schemas/demo";
 import { useTRPC } from "@/lib/trpc/client";
-import { toastTRPCError } from "@/lib/trpc/toast-error";
 
 type SeedHistoryItem = {
   seed: Seed;
@@ -419,12 +418,7 @@ export function DashboardClient() {
   };
 
   const handleUpdateContent = async (id: string, content: string) => {
-    try {
-      await updateContentMutation.mutateAsync({ id, content });
-      toast.success("Saved");
-    } catch (err) {
-      toastTRPCError(err, { title: "Failed to save" });
-    }
+    await updateContentMutation.mutateAsync({ id, content });
   };
 
   return (

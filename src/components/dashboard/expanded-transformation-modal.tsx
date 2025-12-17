@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Transformation } from "@/db/schema";
 import { useTRPC } from "@/lib/trpc/client";
+import { toastTRPCError } from "@/lib/trpc/toast-error";
 import { cn } from "@/lib/utils";
 import {
   formatRelativeTime,
@@ -129,10 +130,8 @@ export function ExpandedTransformationModal({
         }),
       );
       setActiveTab("view");
-    } catch (_error) {
-      toast.error("Failed to save changes", {
-        description: "Please try again",
-      });
+    } catch (error) {
+      toastTRPCError(error, { title: "Failed to save changes" });
     } finally {
       setIsSaving(false);
     }
