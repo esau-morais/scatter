@@ -34,7 +34,10 @@ const OUTPUT_LEAK_PATTERNS = [
 type PromptSafeKind = "content" | "persona";
 
 export function sanitizeUserInput(input: string): string {
-  return input.replace(ZERO_WIDTH_CHARS, "").replace(/\n{3,}/g, "\n\n").trim();
+  return input
+    .replace(ZERO_WIDTH_CHARS, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 export function detectInjectionAttempt(text: string): boolean {

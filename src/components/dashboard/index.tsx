@@ -21,6 +21,7 @@ import {
   getDemoFromStorage,
 } from "@/lib/schemas/demo";
 import { useTRPC } from "@/lib/trpc/client";
+import { toastTRPCError } from "@/lib/trpc/toast-error";
 
 type SeedHistoryItem = {
   seed: Seed;
@@ -124,8 +125,16 @@ export function DashboardClient() {
         );
       },
       onError: (error) => {
-        console.error("Failed to generate transformations:", error);
         setLatestGeneration(null);
+        const code = error.data?.code;
+        toast.error(
+          code === "TOO_MANY_REQUESTS"
+            ? "Rate limit exceeded"
+            : "Failed to generate content",
+          {
+            description: error.message,
+          },
+        );
       },
     }),
   );
@@ -218,10 +227,16 @@ export function DashboardClient() {
         toast.dismiss(`regenerate-${updatedTransformation.id}`);
         toast.success(`${platformNames[platform]} regenerated!`);
       },
-      onError: (_error, variables) => {
+      onError: (error, variables) => {
         setRegeneratingId(null);
         toast.dismiss(`regenerate-${variables.id}`);
-        toast.error("Failed to regenerate content");
+        const code = error.data?.code;
+        toast.error(
+          code === "TOO_MANY_REQUESTS"
+            ? "Rate limit exceeded"
+            : "Failed to regenerate",
+          { description: error.message },
+        );
       },
     }),
   );
@@ -404,7 +419,12 @@ export function DashboardClient() {
   };
 
   const handleUpdateContent = async (id: string, content: string) => {
-    await updateContentMutation.mutateAsync({ id, content });
+    try {
+      await updateContentMutation.mutateAsync({ id, content });
+      toast.success("Saved");
+    } catch (err) {
+      toastTRPCError(err, { title: "Failed to save" });
+    }
   };
 
   return (

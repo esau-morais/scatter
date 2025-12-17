@@ -49,7 +49,7 @@ export function TryClient() {
         });
       },
       onError: (error) => {
-        if (error.message.includes("free try")) {
+        if (error.data?.code === "TOO_MANY_REQUESTS") {
           setShowAuthWall(true);
         } else {
           toast.error("Failed to generate content", {
