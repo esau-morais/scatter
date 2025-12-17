@@ -63,7 +63,7 @@ export function PricingSection() {
   const PlanLink = (plan: (typeof pricing)[number]) => (
     <Link
       className={cn(
-        "w-full",
+        "w-full mt-auto",
         buttonVariants({
           variant: plan.highlighted ? "default" : "outline",
         }),

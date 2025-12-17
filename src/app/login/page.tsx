@@ -1,8 +1,8 @@
-import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoginContainer, LoginForm } from "@/components/auth/login-form";
 import { Card } from "@/components/ui/card";
+import { Scatter } from "@/components/ui/svgs";
 
 const noiseSvg = `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`;
 
@@ -25,7 +25,7 @@ export default function LoginPage() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary">
-              <Sparkles className="size-5 text-primary-foreground" />
+              <Scatter className="size-5 text-primary-foreground" />
             </div>
             <span className="text-2xl font-bold tracking-tight">Scatter</span>
           </Link>
@@ -35,12 +35,12 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <Card className="border-border/50 bg-card/80 backdrop-blur-sm p-6">
+        <Card className="border-border/80 bg-card/60 backdrop-blur-sm p-6">
           <Suspense>
             <LoginForm />
           </Suspense>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
+          <div className="mt-4 text-center text-sm text-muted-foreground">
             By continuing, you agree to our{" "}
             <Link href="/" className="text-primary hover:underline">
               Terms of Service

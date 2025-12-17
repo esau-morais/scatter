@@ -1,7 +1,18 @@
 import { google } from "@ai-sdk/google";
 import { TRPCError } from "@trpc/server";
 import { generateObject } from "ai";
-import { and, desc, eq, inArray, max, not, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  lt,
+  max,
+  not,
+  or,
+  sql,
+} from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import {
@@ -10,7 +21,15 @@ import {
   transformationVersions,
   usageStats,
 } from "@/db/schema";
-import { users } from "@/lib/auth/auth-schema";
+import { accounts, users } from "@/lib/auth/auth-schema";
+import { getValidToken, validateToken } from "../lib/oauth-tokens";
+import {
+  getLinkedInPersonUrn,
+  postToLinkedIn,
+  postToX,
+} from "../lib/platform-clients";
+import { linkedInPublishLimiter, xPublishLimiter } from "../lib/rate-limit";
+import { splitXThread } from "../lib/thread-splitter";
 import {
   getCurrentMonthUsage,
   getStartOfMonth,
@@ -351,6 +370,9 @@ export const transformationsRouter = router({
           .update(transformations)
           .set({
             postedAt: willBePosted ? new Date() : null,
+            xPublishingAt: null,
+            xLastPublishError: null,
+            ...(willBePosted ? {} : { xTweetIds: [] }),
           })
           .where(eq(transformations.id, input.id))
           .returning();
@@ -531,6 +553,9 @@ export const transformationsRouter = router({
             content: generated.content,
             postedAt: null,
             editedAt: null,
+            xTweetIds: [],
+            xPublishingAt: null,
+            xLastPublishError: null,
           })
           .where(eq(transformations.id, id))
           .returning();
@@ -606,6 +631,9 @@ export const transformationsRouter = router({
             content,
             editedAt: new Date(),
             postedAt: null,
+            xTweetIds: [],
+            xPublishingAt: null,
+            xLastPublishError: null,
           })
           .where(eq(transformations.id, id))
           .returning();
@@ -725,6 +753,9 @@ export const transformationsRouter = router({
             content: version.content,
             editedAt: new Date(),
             postedAt: null,
+            xTweetIds: [],
+            xPublishingAt: null,
+            xLastPublishError: null,
           })
           .where(eq(transformations.id, transformationId))
           .returning();
@@ -754,5 +785,328 @@ export const transformationsRouter = router({
       });
 
       return updated;
+    }),
+
+  publishToX: protectedProcedure
+    .input(z.object({ transformationId: z.uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const transformation = await db.query.transformations.findFirst({
+        where: eq(transformations.id, input.transformationId),
+        with: {
+          seed: true,
+        },
+      });
+
+      if (!transformation || transformation.seed.userId !== userId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Transformation not found",
+        });
+      }
+
+      if (transformation.platform !== "x") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This transformation is not for X platform",
+        });
+      }
+
+      if (transformation.postedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This transformation has already been posted",
+        });
+      }
+
+      const rateLimitResult = await xPublishLimiter.limit("app");
+      if (!rateLimitResult.success) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `App-level rate limit exceeded. X free tier allows 17 posts per day across all users. Please try again later.`,
+        });
+      }
+
+      const accessToken = await getValidToken({
+        userId,
+        provider: "twitter",
+      });
+
+      const tweets = splitXThread(transformation.content);
+
+      const now = new Date();
+      const lockCutoff = new Date(Date.now() - 15 * 60 * 1000);
+      const [locked] = await db
+        .update(transformations)
+        .set({
+          xPublishingAt: now,
+          xLastPublishError: null,
+        })
+        .where(
+          and(
+            eq(transformations.id, input.transformationId),
+            isNull(transformations.postedAt),
+            or(
+              isNull(transformations.xPublishingAt),
+              // If the lock is stale (e.g. server crashed), allow takeover after 15 minutes.
+              lt(transformations.xPublishingAt, lockCutoff),
+            ),
+          ),
+        )
+        .returning({ id: transformations.id });
+
+      if (!locked) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message:
+            "Publishing is already in progress for this transformation. Please try again in a few minutes.",
+        });
+      }
+
+      const alreadyPostedTweetIds = transformation.xTweetIds ?? [];
+      if (alreadyPostedTweetIds.length > tweets.length) {
+        await db
+          .update(transformations)
+          .set({
+            xPublishingAt: null,
+            xLastPublishError:
+              "Stored X publish state is inconsistent with current content.",
+          })
+          .where(eq(transformations.id, input.transformationId));
+
+        throw new TRPCError({
+          code: "CONFLICT",
+          message:
+            "This transformation has an inconsistent X publish state (likely due to an edit). Please edit the content again to reset publish state, then retry.",
+        });
+      }
+
+      let lastTweetId: string | undefined =
+        alreadyPostedTweetIds.length > 0
+          ? alreadyPostedTweetIds[alreadyPostedTweetIds.length - 1]
+          : undefined;
+      const tweetIds = [...alreadyPostedTweetIds];
+
+      try {
+        for (let i = alreadyPostedTweetIds.length; i < tweets.length; i++) {
+          const tweetText = tweets[i];
+          const response = await postToX({
+            accessToken,
+            text: tweetText,
+            replyToTweetId: lastTweetId,
+          });
+
+          lastTweetId = response.data.id;
+          tweetIds.push(lastTweetId);
+
+          // Persist partial success so retries resume instead of re-posting from the start.
+          await db
+            .update(transformations)
+            .set({
+              xTweetIds: tweetIds,
+              xPublishingAt: new Date(),
+              xLastPublishError: null,
+            })
+            .where(eq(transformations.id, input.transformationId));
+        }
+
+        const updated = await db.transaction(async (tx) => {
+          const [result] = await tx
+            .update(transformations)
+            .set({
+              postedAt: new Date(),
+              xPublishingAt: null,
+              xLastPublishError: null,
+            })
+            .where(eq(transformations.id, input.transformationId))
+            .returning();
+
+          const month = getStartOfMonth();
+          await tx
+            .insert(usageStats)
+            .values({
+              userId,
+              month,
+              seedsCreated: 0,
+              transformationsCreated: 0,
+              transformationsPosted: 1,
+            })
+            .onConflictDoUpdate({
+              target: [usageStats.userId, usageStats.month],
+              set: {
+                transformationsPosted: sql`${usageStats.transformationsPosted} + 1`,
+              },
+            });
+
+          return result;
+        });
+
+        return {
+          success: true,
+          transformation: updated,
+          tweetIds,
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        await db
+          .update(transformations)
+          .set({
+            xPublishingAt: null,
+            xLastPublishError: message,
+          })
+          .where(eq(transformations.id, input.transformationId));
+        throw err;
+      }
+    }),
+
+  publishToLinkedIn: protectedProcedure
+    .input(z.object({ transformationId: z.uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const transformation = await db.query.transformations.findFirst({
+        where: eq(transformations.id, input.transformationId),
+        with: {
+          seed: true,
+        },
+      });
+
+      if (!transformation || transformation.seed.userId !== userId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Transformation not found",
+        });
+      }
+
+      if (transformation.platform !== "linkedin") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This transformation is not for LinkedIn platform",
+        });
+      }
+
+      if (transformation.postedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This transformation has already been posted",
+        });
+      }
+
+      if (transformation.content.length > 3000) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "LinkedIn post content exceeds 3000 characters",
+        });
+      }
+
+      const rateLimitResult = await linkedInPublishLimiter.limit(userId);
+      if (!rateLimitResult.success) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message:
+            "LinkedIn rate limit exceeded (150 posts/day). Please try again later.",
+        });
+      }
+
+      const accessToken = await getValidToken({
+        userId,
+        provider: "linkedin",
+      });
+
+      const authorUrn = await getLinkedInPersonUrn(accessToken);
+
+      const { postId } = await postToLinkedIn({
+        accessToken,
+        authorUrn,
+        text: transformation.content,
+      });
+
+      const updated = await db.transaction(async (tx) => {
+        const [result] = await tx
+          .update(transformations)
+          .set({
+            postedAt: new Date(),
+          })
+          .where(eq(transformations.id, input.transformationId))
+          .returning();
+
+        const month = getStartOfMonth();
+        await tx
+          .insert(usageStats)
+          .values({
+            userId,
+            month,
+            seedsCreated: 0,
+            transformationsCreated: 0,
+            transformationsPosted: 1,
+          })
+          .onConflictDoUpdate({
+            target: [usageStats.userId, usageStats.month],
+            set: {
+              transformationsPosted: sql`${usageStats.transformationsPosted} + 1`,
+            },
+          });
+
+        return result;
+      });
+
+      return {
+        success: true,
+        transformation: updated,
+        postId,
+      };
+    }),
+
+  getConnectedAccounts: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    const userAccounts = await db.query.accounts.findMany({
+      where: eq(accounts.userId, userId),
+      columns: { providerId: true },
+    });
+
+    const providers = new Set(userAccounts.map((a) => a.providerId));
+
+    const [twitter, linkedin] = await Promise.all([
+      providers.has("twitter")
+        ? validateToken({ userId, provider: "twitter" })
+        : false,
+      providers.has("linkedin")
+        ? validateToken({ userId, provider: "linkedin" })
+        : false,
+    ]);
+
+    return {
+      twitter,
+      linkedin,
+      google: providers.has("google"),
+      github: providers.has("github"),
+    };
+  }),
+
+  disconnectAccount: protectedProcedure
+    .input(z.object({ provider: z.enum(["twitter", "linkedin"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const result = await db
+        .delete(accounts)
+        .where(
+          and(
+            eq(accounts.userId, userId),
+            eq(accounts.providerId, input.provider),
+          ),
+        )
+        .returning();
+
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `${input.provider === "twitter" ? "X" : "LinkedIn"} account not connected`,
+        });
+      }
+
+      return { success: true };
     }),
 });

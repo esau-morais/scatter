@@ -126,7 +126,7 @@ export function HeroSection() {
             <div className="size-3 rounded-full bg-yellow-500/80" />
             <div className="size-3 rounded-full bg-green-500/80" />
             <span className="ml-4 text-sm text-muted-foreground">
-              scatter.app
+              usescatter.app
             </span>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -144,7 +144,7 @@ export function HeroSection() {
               {platforms.map((platform, i) => (
                 <motion.div
                   key={platform.name}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-secondary/30 px-4 py-3"
+                  className="flex items-center gap-3 rounded-lg border border-border bg-secondary/50 px-4 py-3"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 + i * 0.1 }}

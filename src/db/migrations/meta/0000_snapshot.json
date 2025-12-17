@@ -1,5 +1,5 @@
 {
-  "id": "24a831c6-a272-46ed-a332-37fa300f10e9",
+  "id": "e718b380-7d30-45ff-958c-c933364c5073",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -193,6 +193,25 @@
         "posted_at": {
           "name": "posted_at",
           "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "x_tweet_ids": {
+          "name": "x_tweet_ids",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "ARRAY[]::text[]"
+        },
+        "x_publishing_at": {
+          "name": "x_publishing_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "x_last_publish_error": {
+          "name": "x_last_publish_error",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

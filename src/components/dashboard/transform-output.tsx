@@ -15,7 +15,14 @@ import { TransformationCard } from "./transformation-card";
 interface TransformOutputProps {
   transformations: Transformation[];
   isGenerating: boolean;
+  isPublishing: string | null;
+  connectedAccounts?: {
+    twitter: boolean;
+    linkedin: boolean;
+  };
   onMarkAsPosted: (id: string, posted: boolean) => void;
+  onPublishToX?: (id: string) => void;
+  onPublishToLinkedIn?: (id: string) => void;
   onRegenerate: (id: string) => void;
   isRegenerating: string | null;
   onUpdateContent: (id: string, content: string) => Promise<void>;
@@ -49,7 +56,7 @@ function LoadingSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-secondary/30 via-secondary/20 to-background/50 p-8 text-center">
+    <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-linear-to-br from-secondary/50 via-secondary/40 to-background/50 p-8 text-center">
       <div className="relative mb-6 motion-safe:animate-bounce">
         <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" />
         <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/30 to-primary/10 ring-4 ring-primary/10">
@@ -121,7 +128,11 @@ function GeneratingState() {
 export function TransformOutput({
   transformations,
   isGenerating,
+  isPublishing,
+  connectedAccounts,
   onMarkAsPosted,
+  onPublishToX,
+  onPublishToLinkedIn,
   onRegenerate,
   isRegenerating,
   onUpdateContent,
@@ -175,7 +186,7 @@ export function TransformOutput({
   }
 
   return (
-    <Card className="border-border/50 bg-card/50 p-6 backdrop-blur-sm">
+    <Card className="border-border/80 bg-card/60 p-6 backdrop-blur-sm">
       <div className="mb-4">
         <h2 className="text-lg font-semibold">Platform Outputs</h2>
         <p className="text-xs text-muted-foreground">
@@ -201,9 +212,13 @@ export function TransformOutput({
                 index={i}
                 copiedId={copiedId}
                 isRegenerating={isRegenerating ?? null}
+                isPublishing={isPublishing ?? null}
+                connectedAccounts={connectedAccounts}
                 onCopy={handleCopy}
                 onExpand={handleExpand}
                 onMarkAsPosted={handleMarkAsPosted}
+                onPublishToX={onPublishToX}
+                onPublishToLinkedIn={onPublishToLinkedIn}
                 onRegenerate={handleRegenerate}
               />
             ))}

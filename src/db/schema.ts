@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -52,6 +52,12 @@ export const transformations = pgTable(
     platform: platformEnum("platform").notNull(),
     content: text("content").notNull(),
     postedAt: timestamp("posted_at"),
+    xTweetIds: text("x_tweet_ids")
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    xPublishingAt: timestamp("x_publishing_at"),
+    xLastPublishError: text("x_last_publish_error"),
     editedAt: timestamp("edited_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

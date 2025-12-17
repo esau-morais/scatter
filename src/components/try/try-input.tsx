@@ -1,16 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  Settings2,
-  Sparkles,
-} from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { ChevronRight, FileText, Settings2, Sparkles } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
@@ -26,6 +20,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Linkedin, Tiktok, X } from "@/components/ui/svgs";
 import { Textarea } from "@/components/ui/textarea";
@@ -86,8 +85,6 @@ export function TryInput({
   isGenerating,
   hasUsedFreeTry,
 }: TryInputProps) {
-  const [showOptions, setShowOptions] = useState(false);
-
   const form = useForm<SeedFormValues>({
     resolver: zodResolver(seedSchema),
     defaultValues: {
@@ -184,7 +181,7 @@ export function TryInput({
                               "group flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all",
                               isSelected
                                 ? "border-primary/50 bg-primary/10 shadow-[0_0_20px_oklch(0.72_0.19_30/15%)]"
-                                : "border-border bg-secondary/30 hover:border-border hover:bg-secondary/50",
+                                : "border-border bg-secondary/50 hover:border-border hover:bg-secondary/70",
                             )}
                           >
                             <Checkbox
@@ -239,42 +236,32 @@ export function TryInput({
             )}
           />
 
-          <div className="mb-4">
-            <button
-              type="button"
-              onClick={() => setShowOptions(!showOptions)}
-              aria-expanded={showOptions}
-              className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-3 py-2.5 text-sm transition-all hover:bg-secondary/50"
-            >
-              <span className="flex items-center gap-2">
-                <Settings2 className="size-4 text-muted-foreground" />
-                <span className="font-medium text-muted-foreground">
-                  Style Options
-                </span>
-                {isCustomized && (
-                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
-                    Customized
-                  </span>
-                )}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "size-4 text-muted-foreground transition-transform duration-200",
-                  showOptions && "rotate-180",
-                )}
-              />
-            </button>
+          <footer className="space-y-3">
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className={cn(
+                      "shrink-0",
+                      isCustomized && "border-primary/50 bg-primary/10",
+                    )}
+                  >
+                    <Settings2 className="size-4" />
+                    <span className="sr-only">Style Options</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-80">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <h4 className="font-medium">Style Options</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Customize tone, length, and persona
+                      </p>
+                    </div>
 
-            <AnimatePresence>
-              {showOptions && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-3 space-y-4 rounded-lg border border-border bg-secondary/20 p-4">
                     <FormField
                       control={form.control}
                       name="tone"
@@ -287,14 +274,14 @@ export function TryInput({
                             <RadioGroup
                               onValueChange={field.onChange}
                               value={field.value}
-                              className="grid grid-cols-2 gap-2"
+                              className="grid grid-cols-2 gap-1.5"
                             >
                               {toneOptions.map((option) => (
                                 <Label
                                   key={option.id}
                                   htmlFor={`try-tone-${option.id}`}
                                   className={cn(
-                                    "flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs transition-all [&:has([data-state=checked])]:border-primary/50 [&:has([data-state=checked])]:bg-primary/10",
+                                    "flex cursor-pointer items-center rounded-md border px-2.5 py-1.5 text-xs transition-all [&:has([data-state=checked])]:border-primary/50 [&:has([data-state=checked])]:bg-primary/10",
                                     "border-border bg-background text-muted-foreground hover:bg-secondary/50",
                                   )}
                                 >
@@ -303,14 +290,7 @@ export function TryInput({
                                     id={`try-tone-${option.id}`}
                                     className="sr-only"
                                   />
-                                  <span className="flex flex-col">
-                                    <span className="font-medium">
-                                      {option.label}
-                                    </span>
-                                    <span className="text-[10px] opacity-70">
-                                      {option.description}
-                                    </span>
-                                  </span>
+                                  {option.label}
                                 </Label>
                               ))}
                             </RadioGroup>
@@ -331,14 +311,14 @@ export function TryInput({
                             <RadioGroup
                               onValueChange={field.onChange}
                               value={field.value}
-                              className="grid grid-cols-3 gap-2"
+                              className="grid grid-cols-3 gap-1.5"
                             >
                               {lengthOptions.map((option) => (
                                 <Label
                                   key={option.id}
                                   htmlFor={`try-length-${option.id}`}
                                   className={cn(
-                                    "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-xs font-medium transition-all [&:has([data-state=checked])]:border-primary/50 [&:has([data-state=checked])]:bg-primary/10 [&:has([data-state=checked])]:text-foreground",
+                                    "flex cursor-pointer items-center justify-center rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all [&:has([data-state=checked])]:border-primary/50 [&:has([data-state=checked])]:bg-primary/10 [&:has([data-state=checked])]:text-foreground",
                                     "border-border bg-background text-muted-foreground hover:bg-secondary/50",
                                   )}
                                 >
@@ -366,8 +346,8 @@ export function TryInput({
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. a startup founder, marketing expert..."
-                              className="h-9 bg-background text-sm"
+                              placeholder="e.g. startup founder, tech blogger..."
+                              className="h-8 text-sm"
                               {...field}
                             />
                           </FormControl>
@@ -375,43 +355,41 @@ export function TryInput({
                       )}
                     />
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                </PopoverContent>
+              </Popover>
 
-          <footer className="space-y-3">
-            <Button
-              type="submit"
-              className="w-full shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)]"
-              disabled={!form.formState.isValid || isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <motion.span
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Number.POSITIVE_INFINITY,
-                      ease: "linear",
-                    }}
-                  >
+              <Button
+                type="submit"
+                className="flex-1 shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)]"
+                disabled={!form.formState.isValid || isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "linear",
+                      }}
+                    >
+                      <Sparkles className="mr-2 size-4" />
+                    </motion.span>
+                    Transforming...
+                  </>
+                ) : hasUsedFreeTry ? (
+                  <>
                     <Sparkles className="mr-2 size-4" />
-                  </motion.span>
-                  Transforming...
-                </>
-              ) : hasUsedFreeTry ? (
-                <>
-                  <Sparkles className="mr-2 size-4" />
-                  Sign Up to Transform Again
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 size-4" />
-                  Generate (1 Free)
-                </>
-              )}
-            </Button>
+                    Sign Up to Transform Again
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 size-4" />
+                    Generate (1 Free)
+                  </>
+                )}
+              </Button>
+            </div>
 
             <Link href="/login?from=try" className="block">
               <Button
