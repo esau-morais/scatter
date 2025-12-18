@@ -251,7 +251,7 @@ export const transformationsRouter = router({
         const lengths = lengthModifiers[length];
 
         const { object: generated } = await generateObject({
-          model: google("gemini-2.5-flash-preview-09-2025"),
+          model: google("gemini-3-flash-preview"),
           schema: z.object({
             transformations: z.array(
               z.object({
@@ -541,7 +541,7 @@ Generate content ONLY for: ${platforms.join(", ")}.`,
       };
 
       const { object: generated } = await generateObject({
-        model: google("gemini-2.5-flash-preview-09-2025"),
+        model: google("gemini-3-flash-preview"),
         schema: z.object({
           content: z.string(),
         }),

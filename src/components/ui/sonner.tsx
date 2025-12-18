@@ -28,6 +28,7 @@ export const Toaster = ({ ...props }: ToasterProps) => {
           warning:
             "border-l-warning! bg-warning/10! text-foreground! shadow-warning/20!",
           info: "border-l-coral! bg-coral/10! text-foreground! shadow-coral/20!",
+          closeButton: "right-0! translate-x-2/3 left-[unset]!",
         },
       }}
       icons={{

@@ -21,6 +21,7 @@ import {
   getDemoFromStorage,
 } from "@/lib/schemas/demo";
 import { useTRPC } from "@/lib/trpc/client";
+import { getErrorMessage } from "@/lib/trpc/error";
 
 type SeedHistoryItem = {
   seed: Seed;
@@ -131,7 +132,7 @@ export function DashboardClient() {
             ? "Rate limit exceeded"
             : "Failed to generate content",
           {
-            description: error.message,
+            description: getErrorMessage(error),
           },
         );
       },

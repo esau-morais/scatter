@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { TRPCError } from "@trpc/server";
 import { ArrowRight, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useForm } from "react-hook-form";
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/lib/trpc/client";
-import { getTRPCErrorCode } from "@/lib/trpc/errors";
 import { cn } from "@/lib/utils";
 
 const waitlistSchema = z.object({
@@ -47,9 +47,7 @@ export function WaitlistForm({
       await joinMutation.mutateAsync(values);
       form.reset();
     } catch (err) {
-      const code = getTRPCErrorCode(err);
-      const message = err instanceof Error ? err.message : "";
-      if (code === "CONFLICT" && message === "already_joined") {
+      if (err instanceof TRPCError && err?.message === "already_joined") {
         form.setError("email", {
           message: "You're already on the list!",
         });
