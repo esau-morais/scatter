@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import superjson from "superjson";
+import z, { ZodError } from "zod";
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
 import { getFingerprint } from "./lib/fingerprint";
@@ -22,6 +23,19 @@ export type Context = Awaited<ReturnType<typeof createContext>>;
 
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
+  errorFormatter(opts) {
+    const { shape, error } = opts;
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.code === "BAD_REQUEST" && error.cause instanceof ZodError
+            ? z.flattenError(error.cause)
+            : null,
+      },
+    };
+  },
 });
 
 export const router = t.router;

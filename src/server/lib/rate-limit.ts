@@ -46,3 +46,23 @@ export async function checkAuthenticatedRateLimit(
     return true;
   }
 }
+
+// X: 17 posts/day (Free tier - app-level, shared across all users)
+export const xPublishLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(17, "24h"),
+  analytics: true,
+  timeout: 5000,
+  prefix: "x_publish_app",
+  ephemeralCache,
+});
+
+// LinkedIn: 150 posts/day per user
+export const linkedInPublishLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(150, "24h"),
+  analytics: true,
+  timeout: 5000,
+  prefix: "linkedin_publish",
+  ephemeralCache,
+});

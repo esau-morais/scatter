@@ -25,6 +25,9 @@ CREATE TABLE "transformations" (
 	"platform" "platform" NOT NULL,
 	"content" text NOT NULL,
 	"posted_at" timestamp,
+	"x_tweet_ids" text[] DEFAULT ARRAY[]::text[] NOT NULL,
+	"x_publishing_at" timestamp,
+	"x_last_publish_error" text,
 	"edited_at" timestamp,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );

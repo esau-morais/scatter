@@ -15,6 +15,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: false,
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      // Allow linking accounts with different email addresses (e.g., LinkedIn with different domain)
+      allowDifferentEmails: true,
+      trustedProviders: ["google", "github", "twitter", "linkedin"],
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -24,6 +32,19 @@ export const auth = betterAuth({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     },
+    twitter: {
+      clientId: process.env.TWITTER_CLIENT_ID!,
+      clientSecret: process.env.TWITTER_CLIENT_SECRET!,
+      // Required scopes for posting tweets (per X API v2 docs)
+      // https://docs.x.com/fundamentals/authentication/guides/v2-authentication-mapping
+      scope: ["tweet.read", "tweet.write", "users.read", "offline.access"],
+    },
+    linkedin: {
+      clientId: process.env.LINKEDIN_CLIENT_ID!,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
+      // Required scopes for posting to LinkedIn
+      scope: ["openid", "profile", "email", "w_member_social"],
+    },
   },
   plugins: [lastLoginMethod()],
   databaseHooks: {
@@ -31,6 +52,7 @@ export const auth = betterAuth({
       create: {
         before: async (user) => {
           const email = user.email.toLowerCase();
+
           const entry = await db.query.waitlist.findFirst({
             where: and(eq(waitlist.email, email), eq(waitlist.approved, true)),
           });

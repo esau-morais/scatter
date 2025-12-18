@@ -65,7 +65,7 @@ export function StatsCards() {
         >
           <Card
             className={cn(
-              "border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:shadow-lg",
+              "border-border/80 bg-card/60 p-6 backdrop-blur-sm transition-all hover:border-border hover:shadow-lg",
               !hasData && "border-dashed",
             )}
           >
@@ -96,7 +96,7 @@ export function StatsCards() {
               <motion.div
                 className={cn(
                   "flex size-10 items-center justify-center rounded-lg bg-secondary transition-colors",
-                  !hasData && "bg-secondary/50 text-muted-foreground/40",
+                  !hasData && "bg-secondary/60 text-muted-foreground/50",
                 )}
                 animate={
                   !hasData

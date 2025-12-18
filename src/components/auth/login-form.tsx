@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Github, Google } from "@/components/ui/svgs";
 import { authClient } from "@/lib/auth/auth-client";
+import { cn } from "@/lib/utils";
 import { Badge } from "../ui/badge";
 
 export function LoginContainer({ children }: { children: ReactNode }) {
@@ -80,7 +81,13 @@ export function LoginForm() {
   const isLoading = isLoadingGoogle || isLoadingGithub;
 
   return (
-    <div className="space-y-4">
+    <div
+      className={cn(
+        "space-y-4",
+        lastMethod === "google" && "pt-2.5",
+        lastMethod === "github" && "space-y-6.5",
+      )}
+    >
       <div className="relative">
         <Button
           variant="outline"

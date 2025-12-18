@@ -51,7 +51,7 @@ export default function RootLayout({
           <MotionConfig reducedMotion="user">
             <TRPCReactProvider>
               {children}
-              <Toaster position="top-center" />
+              <Toaster position="top-center" closeButton />
             </TRPCReactProvider>
           </MotionConfig>
         </ThemeProvider>

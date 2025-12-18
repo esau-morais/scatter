@@ -21,6 +21,7 @@ import {
   getDemoFromStorage,
 } from "@/lib/schemas/demo";
 import { useTRPC } from "@/lib/trpc/client";
+import { getErrorMessage } from "@/lib/trpc/error";
 
 type SeedHistoryItem = {
   seed: Seed;
@@ -43,7 +44,6 @@ export function DashboardClient() {
   const searchParams = useSearchParams();
   const fromParam = searchParams.get("from");
 
-  // Check for pending demo from /try page
   useEffect(() => {
     const dismissed = localStorage.getItem("scatter_onboarding_dismissed");
 
@@ -125,8 +125,16 @@ export function DashboardClient() {
         );
       },
       onError: (error) => {
-        console.error("Failed to generate transformations:", error);
         setLatestGeneration(null);
+        const code = error.data?.code;
+        toast.error(
+          code === "TOO_MANY_REQUESTS"
+            ? "Rate limit exceeded"
+            : "Failed to generate content",
+          {
+            description: getErrorMessage(error),
+          },
+        );
       },
     }),
   );
@@ -219,10 +227,16 @@ export function DashboardClient() {
         toast.dismiss(`regenerate-${updatedTransformation.id}`);
         toast.success(`${platformNames[platform]} regenerated!`);
       },
-      onError: (_error, variables) => {
+      onError: (error, variables) => {
         setRegeneratingId(null);
         toast.dismiss(`regenerate-${variables.id}`);
-        toast.error("Failed to regenerate content");
+        const code = error.data?.code;
+        toast.error(
+          code === "TOO_MANY_REQUESTS"
+            ? "Rate limit exceeded"
+            : "Failed to regenerate",
+          { description: error.message },
+        );
       },
     }),
   );
@@ -265,6 +279,120 @@ export function DashboardClient() {
       },
     }),
   );
+
+  const { data: connectedAccounts } = useQuery(
+    trpc.transformations.getConnectedAccounts.queryOptions(),
+  );
+
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+
+  const publishToXMutation = useMutation(
+    trpc.transformations.publishToX.mutationOptions({
+      onSuccess: (data) => {
+        setPublishingId(null);
+        const currentHistory =
+          queryClient.getQueryData<SeedHistoryItem[]>(
+            seedsListOptions.queryKey,
+          ) ?? [];
+
+        const updatedHistory = currentHistory.map((item) => {
+          if (item.seed.id === data.transformation.seedId) {
+            return {
+              ...item,
+              transformations: item.transformations.map((t) =>
+                t.id === data.transformation.id ? data.transformation : t,
+              ),
+            };
+          }
+          return item;
+        });
+
+        queryClient.setQueryData(seedsListOptions.queryKey, updatedHistory);
+        queryClient.invalidateQueries(
+          trpc.transformations.getDashboardData.queryOptions(),
+        );
+
+        setLatestGeneration((prev) => {
+          if (!prev || prev.seed.id !== data.transformation.seedId) return prev;
+          return {
+            ...prev,
+            transformations: prev.transformations.map((t) =>
+              t.id === data.transformation.id ? data.transformation : t,
+            ),
+          };
+        });
+
+        toast.success("Posted to X!", {
+          description: `Thread posted successfully (${data.tweetIds.length} tweet${data.tweetIds.length > 1 ? "s" : ""})`,
+        });
+      },
+      onError: (error) => {
+        setPublishingId(null);
+        toast.error("Failed to post to X", {
+          description: error.message,
+        });
+      },
+    }),
+  );
+
+  const publishToLinkedInMutation = useMutation(
+    trpc.transformations.publishToLinkedIn.mutationOptions({
+      onSuccess: (data) => {
+        setPublishingId(null);
+        const currentHistory =
+          queryClient.getQueryData<SeedHistoryItem[]>(
+            seedsListOptions.queryKey,
+          ) ?? [];
+
+        const updatedHistory = currentHistory.map((item) => {
+          if (item.seed.id === data.transformation.seedId) {
+            return {
+              ...item,
+              transformations: item.transformations.map((t) =>
+                t.id === data.transformation.id ? data.transformation : t,
+              ),
+            };
+          }
+          return item;
+        });
+
+        queryClient.setQueryData(seedsListOptions.queryKey, updatedHistory);
+        queryClient.invalidateQueries(
+          trpc.transformations.getDashboardData.queryOptions(),
+        );
+
+        setLatestGeneration((prev) => {
+          if (!prev || prev.seed.id !== data.transformation.seedId) return prev;
+          return {
+            ...prev,
+            transformations: prev.transformations.map((t) =>
+              t.id === data.transformation.id ? data.transformation : t,
+            ),
+          };
+        });
+
+        toast.success("Posted to LinkedIn!", {
+          description: "Your post is now live",
+        });
+      },
+      onError: (error) => {
+        setPublishingId(null);
+        toast.error("Failed to post to LinkedIn", {
+          description: error.message,
+        });
+      },
+    }),
+  );
+
+  const handlePublishToX = (id: string) => {
+    setPublishingId(id);
+    publishToXMutation.mutate({ transformationId: id });
+  };
+
+  const handlePublishToLinkedIn = (id: string) => {
+    setPublishingId(id);
+    publishToLinkedInMutation.mutate({ transformationId: id });
+  };
 
   const handleGenerate = (
     content: string,
@@ -335,7 +463,11 @@ export function DashboardClient() {
             <TransformOutput
               transformations={latestGeneration?.transformations ?? []}
               isGenerating={generateMutation.isPending}
+              isPublishing={publishingId}
+              connectedAccounts={connectedAccounts}
               onMarkAsPosted={handleMarkAsPosted}
+              onPublishToX={handlePublishToX}
+              onPublishToLinkedIn={handlePublishToLinkedIn}
               onRegenerate={handleRegenerate}
               isRegenerating={regeneratingId}
               onUpdateContent={handleUpdateContent}

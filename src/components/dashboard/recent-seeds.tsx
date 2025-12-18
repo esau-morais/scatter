@@ -158,7 +158,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="flex flex-wrap gap-4 rounded-lg border border-border bg-secondary/30 p-4">
+                <div className="flex flex-wrap gap-4 rounded-lg border border-border bg-secondary/50 p-4">
                   <div className="space-y-2">
                     <span className="block text-xs font-medium text-muted-foreground">
                       Platform
@@ -248,7 +248,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex min-h-[500px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-card/30 via-card/20 to-background/50 p-12 text-center backdrop-blur-sm"
+          className="flex min-h-[500px] flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-linear-to-br from-card/60 via-card/40 to-background/50 p-12 text-center backdrop-blur-sm"
         >
           <motion.div
             animate={{
@@ -318,7 +318,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm"
+          className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-card/50 p-12 text-center backdrop-blur-sm"
         >
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <Search className="size-8 text-muted-foreground" />
@@ -350,7 +350,7 @@ export function RecentSeeds({ history = [], onDeleteSeed }: RecentSeedsProps) {
                   transition={{ delay: i * 0.03 }}
                   layout
                 >
-                  <Card className="group border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card/70">
+                  <Card className="group border-border/80 bg-card/60 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card/70">
                     <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
                       <div className="flex-1 min-w-0">
                         <div className="mb-2 flex items-start justify-between gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Expand, RefreshCw, Send } from "lucide-react";
+import { Check, Copy, Expand, Loader2, RefreshCw, Send } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   type PlatformType,
   platformConfig,
 } from "@/components/ui/platform-badge";
+import { Linkedin, X } from "@/components/ui/svgs";
 import type { Transformation } from "@/db/schema";
 import { cn } from "@/lib/utils";
 import {
@@ -22,9 +23,16 @@ interface TransformationCardProps {
   index: number;
   copiedId: string | null;
   isRegenerating: string | null;
+  isPublishing: string | null;
+  connectedAccounts?: {
+    twitter: boolean;
+    linkedin: boolean;
+  };
   onCopy: (id: string, content: string, platformName: string) => void;
   onExpand: (transformation: Transformation) => void;
   onMarkAsPosted: (id: string, posted: boolean, platformName: string) => void;
+  onPublishToX?: (id: string) => void;
+  onPublishToLinkedIn?: (id: string) => void;
   onRegenerate?: (id: string, platformName: string) => void;
 }
 
@@ -33,9 +41,13 @@ export function TransformationCard({
   index,
   copiedId,
   isRegenerating,
+  isPublishing,
+  connectedAccounts,
   onCopy,
   onExpand,
   onMarkAsPosted,
+  onPublishToX,
+  onPublishToLinkedIn,
   onRegenerate,
 }: TransformationCardProps) {
   const platform = transformation.platform as PlatformType;
@@ -47,6 +59,20 @@ export function TransformationCard({
     config.maxChars,
   );
 
+  const isPublishingThis = isPublishing === transformation.id;
+  const isXPlatform = platform === "x";
+  const isLinkedInPlatform = platform === "linkedin";
+  const hasXHandler = !!onPublishToX;
+  const hasLinkedInHandler = !!onPublishToLinkedIn;
+  const isXConnected = connectedAccounts?.twitter ?? false;
+  const isLinkedInConnected = connectedAccounts?.linkedin ?? false;
+
+  const canPublishToX = isXPlatform && hasXHandler && isXConnected;
+  const canPublishToLinkedIn =
+    isLinkedInPlatform && hasLinkedInHandler && isLinkedInConnected;
+  const showXButton = isXPlatform && hasXHandler;
+  const showLinkedInButton = isLinkedInPlatform && hasLinkedInHandler;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -57,7 +83,7 @@ export function TransformationCard({
       <Card
         className={cn(
           "group relative overflow-hidden border-border bg-secondary/50 p-4 transition-all hover:border-border hover:bg-secondary/70",
-          isPosted && "bg-secondary/30",
+          isPosted && "bg-secondary/50",
         )}
       >
         <div className="flex items-start justify-between gap-3">
@@ -112,7 +138,9 @@ export function TransformationCard({
                 variant="ghost"
                 className="size-8 transition-all hover:bg-primary/10"
                 onClick={() => onRegenerate(transformation.id, config.name)}
-                disabled={isRegenerating === transformation.id}
+                disabled={
+                  isRegenerating === transformation.id || isPublishingThis
+                }
               >
                 <RefreshCw
                   className={cn(
@@ -128,27 +156,111 @@ export function TransformationCard({
               variant="ghost"
               className="size-8 transition-all hover:bg-secondary"
               onClick={() => onExpand(transformation)}
+              disabled={isPublishingThis}
             >
               <Expand className="size-4" />
             </Button>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              className={cn(
-                "size-8 transition-all",
-                isPosted && "bg-success/10",
-              )}
-              onClick={() =>
-                onMarkAsPosted(transformation.id, !isPosted, config.name)
-              }
-            >
-              <Send
+
+            {showXButton && (
+              <Button
+                size="icon-sm"
+                variant={
+                  isPosted ? "ghost" : canPublishToX ? "default" : "outline"
+                }
                 className={cn(
-                  "size-4 transition-colors",
-                  isPosted && "text-success",
+                  "size-8 transition-all",
+                  isPosted
+                    ? "bg-success/10 hover:bg-success/20"
+                    : canPublishToX
+                      ? "bg-primary hover:bg-primary/90"
+                      : "opacity-50",
+                  isPublishingThis && "opacity-50",
                 )}
-              />
-            </Button>
+                onClick={() => {
+                  if (canPublishToX && !isPosted && !isPublishingThis) {
+                    onPublishToX(transformation.id);
+                  }
+                }}
+                disabled={isPosted || isPublishingThis || !canPublishToX}
+                title={
+                  isPosted
+                    ? "Already posted"
+                    : !isXConnected
+                      ? "Connect X account first (Settings)"
+                      : "Post to X"
+                }
+              >
+                {isPublishingThis ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <X className="size-4" />
+                )}
+              </Button>
+            )}
+
+            {showLinkedInButton && (
+              <Button
+                size="icon-sm"
+                variant={
+                  isPosted
+                    ? "ghost"
+                    : canPublishToLinkedIn
+                      ? "default"
+                      : "outline"
+                }
+                className={cn(
+                  "size-8 transition-all",
+                  isPosted
+                    ? "bg-success/10 hover:bg-success/20"
+                    : canPublishToLinkedIn
+                      ? "bg-primary hover:bg-primary/90"
+                      : "opacity-50",
+                  isPublishingThis && "opacity-50",
+                )}
+                onClick={() => {
+                  if (canPublishToLinkedIn && !isPosted && !isPublishingThis) {
+                    onPublishToLinkedIn(transformation.id);
+                  }
+                }}
+                disabled={isPosted || isPublishingThis || !canPublishToLinkedIn}
+                title={
+                  isPosted
+                    ? "Already posted"
+                    : !isLinkedInConnected
+                      ? "Connect LinkedIn account first (Settings)"
+                      : "Post to LinkedIn"
+                }
+              >
+                {isPublishingThis ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Linkedin className="size-4" />
+                )}
+              </Button>
+            )}
+
+            {/* Manual mark as posted (for non-publishable platforms) */}
+            {!showXButton && !showLinkedInButton && (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                className={cn(
+                  "size-8 transition-all",
+                  isPosted && "bg-success/10",
+                )}
+                onClick={() =>
+                  onMarkAsPosted(transformation.id, !isPosted, config.name)
+                }
+                disabled={isPublishingThis}
+              >
+                <Send
+                  className={cn(
+                    "size-4 transition-colors",
+                    isPosted && "text-success",
+                  )}
+                />
+              </Button>
+            )}
             <Button
               size="icon-sm"
               variant="ghost"
@@ -156,6 +268,7 @@ export function TransformationCard({
               onClick={() =>
                 onCopy(transformation.id, transformation.content, config.name)
               }
+              disabled={isPublishingThis}
             >
               <AnimatePresence mode="wait">
                 {copiedId === transformation.id ? (

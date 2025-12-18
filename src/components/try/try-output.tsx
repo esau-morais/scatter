@@ -129,7 +129,7 @@ export function TryOutput({ transformations, isGenerating }: TryOutputProps) {
       </div>
 
       {!hasContent ? (
-        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-linear-to-br from-secondary/30 via-secondary/20 to-background/50 p-8 text-center">
+        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-border/70 bg-linear-to-br from-secondary/50 via-secondary/40 to-background/50 p-8 text-center">
           <motion.div
             animate={{
               y: [0, -10, 0],
