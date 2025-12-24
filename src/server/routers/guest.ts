@@ -51,11 +51,9 @@ export const guestRouter = router({
       const generated = await Effect.runPromise(
         generateTransformationsEffect(
           {
-            content: sanitizedContent,
             platforms,
             tone,
             length,
-            persona: sanitizedPersona,
           },
           sanitizedContent,
           sanitizedPersona,
