@@ -4,10 +4,9 @@ import { z } from "zod";
 import { db } from "@/db";
 import { seeds, transformations, usageStats } from "@/db/schema";
 import { users } from "@/lib/auth/auth-schema";
+import { platformEnum } from "../lib/ai";
 import { getStartOfMonth } from "../lib/usage";
 import { protectedProcedure, router } from "../trpc";
-
-const platformEnum = z.enum(["x", "linkedin", "tiktok", "blog"]);
 
 export const onboardingRouter = router({
   complete: protectedProcedure.mutation(async ({ ctx }) => {

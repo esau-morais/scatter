@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "effect-language-service patch",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -67,6 +68,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
+    "@effect/language-service": "^0.62.5",
     "@tailwindcss/postcss": "^4",
     "@types/bun": "latest",
     "@types/canvas-confetti": "^1.9.0",

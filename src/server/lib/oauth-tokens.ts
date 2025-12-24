@@ -6,11 +6,7 @@ import * as Effect from "effect/Effect";
 import * as Schedule from "effect/Schedule";
 import { db } from "@/db";
 import { accounts } from "@/lib/auth/auth-schema";
-
-class DatabaseError extends Data.TaggedError("DatabaseError")<{
-  operation: string;
-  cause?: unknown;
-}> {}
+import { DatabaseError } from "./database/errors";
 
 class TokenVerificationFailed extends Data.TaggedError(
   "TokenVerificationFailed",
