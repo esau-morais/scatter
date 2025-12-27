@@ -75,6 +75,7 @@ describe("usage", () => {
 
     test("returns existing stats when found", async () => {
       const mockStats = {
+        id: crypto.randomUUID(),
         userId: "user1",
         month: getStartOfMonth(),
         seedsCreated: 5,

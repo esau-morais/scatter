@@ -1,22 +1,46 @@
 import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
 import * as Effect from "effect/Effect";
 import type { seeds } from "@/db/schema";
-import { createMockContext } from "../../../tests/helpers";
+import { createMockContext, createMockSession } from "../../../tests/helpers";
 import { NotFoundError } from "../lib/database/errors";
 
-const mockCreateSeedEffect = mock(() =>
-  Effect.succeed({} as typeof seeds.$inferSelect),
-);
-const mockListSeedsEffect = mock(() => Effect.succeed([]));
-const mockFindSeedEffect = mock(() =>
-  Effect.succeed({} as typeof seeds.$inferSelect),
-);
-const mockFindSeedWithTransformationsEffect = mock(() =>
-  Effect.succeed({ transformations: [] } as typeof seeds.$inferSelect & {
-    transformations: unknown[];
-  }),
-);
-const mockDeleteSeedEffect = mock(() => Effect.succeed({ success: true }));
+type SeedWithTransformations = typeof seeds.$inferSelect & {
+  transformations: unknown[];
+};
+
+const createMockSeed = (): typeof seeds.$inferSelect => ({
+  id: crypto.randomUUID(),
+  userId: "user1",
+  content: "",
+  title: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
+
+const createMockSeedWithTransformations = (): SeedWithTransformations => ({
+  ...createMockSeed(),
+  transformations: [],
+});
+
+const mockCreateSeedEffect = mock<
+  () => Effect.Effect<typeof seeds.$inferSelect, never, never>
+>(() => Effect.succeed(createMockSeed()));
+
+const mockListSeedsEffect = mock<
+  () => Effect.Effect<SeedWithTransformations[], never, never>
+>(() => Effect.succeed([]));
+
+const mockFindSeedEffect = mock<
+  () => Effect.Effect<typeof seeds.$inferSelect, NotFoundError, never>
+>(() => Effect.succeed(createMockSeed()));
+
+const mockFindSeedWithTransformationsEffect = mock<
+  () => Effect.Effect<SeedWithTransformations, NotFoundError, never>
+>(() => Effect.succeed(createMockSeedWithTransformations()));
+
+const mockDeleteSeedEffect = mock<
+  () => Effect.Effect<{ success: boolean }, NotFoundError, never>
+>(() => Effect.succeed({ success: true }));
 
 mock.module("../lib/database", () => ({
   createSeedEffect: mockCreateSeedEffect,
@@ -56,7 +80,7 @@ describe("seedsRouter", () => {
       mockCreateSeedEffect.mockReturnValueOnce(Effect.succeed(mockSeed));
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -85,7 +109,7 @@ describe("seedsRouter", () => {
       mockCreateSeedEffect.mockReturnValueOnce(Effect.succeed(mockSeed));
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -134,7 +158,7 @@ describe("seedsRouter", () => {
       mockListSeedsEffect.mockReturnValueOnce(Effect.succeed(mockSeeds));
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -160,7 +184,7 @@ describe("seedsRouter", () => {
       mockListSeedsEffect.mockReturnValueOnce(Effect.succeed([]));
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -185,7 +209,7 @@ describe("seedsRouter", () => {
       mockFindSeedEffect.mockReturnValueOnce(Effect.succeed(mockSeed));
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -202,7 +226,7 @@ describe("seedsRouter", () => {
       );
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -243,7 +267,7 @@ describe("seedsRouter", () => {
       );
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -266,7 +290,7 @@ describe("seedsRouter", () => {
       );
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -284,7 +308,7 @@ describe("seedsRouter", () => {
       );
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
@@ -301,7 +325,7 @@ describe("seedsRouter", () => {
       );
 
       const ctx = createMockContext({
-        session: { user: { id: "user1" } },
+        session: createMockSession({ id: "user1" }),
       });
       const api = seedsRouter.createCaller(ctx);
 
