@@ -1,7 +1,13 @@
-import { and, desc, eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import * as Effect from "effect/Effect";
 import { z } from "zod";
-import { db } from "@/db";
-import { seeds } from "@/db/schema";
+import {
+  createSeedEffect,
+  deleteSeedEffect,
+  findSeedEffect,
+  findSeedWithTransformationsEffect,
+  listSeedsEffect,
+} from "../lib/database";
 import { protectedProcedure, router } from "../trpc";
 
 export const seedsRouter = router({
@@ -13,26 +19,19 @@ export const seedsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const [seed] = await db
-        .insert(seeds)
-        .values({
+      return Effect.runPromise(
+        createSeedEffect({
           userId: ctx.session.user.id,
           title: input.title,
           content: input.content,
-        })
-        .returning();
-
-      return seed;
+        }),
+      );
     }),
 
   list: protectedProcedure.query(async ({ ctx }) => {
-    const results = await db.query.seeds.findMany({
-      where: eq(seeds.userId, ctx.session.user.id),
-      orderBy: desc(seeds.createdAt),
-      with: {
-        transformations: true,
-      },
-    });
+    const results = await Effect.runPromise(
+      listSeedsEffect(ctx.session.user.id),
+    );
 
     return results.map(({ transformations, ...seed }) => ({
       seed,
@@ -43,33 +42,29 @@ export const seedsRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
-      const seed = await db.query.seeds.findFirst({
-        where: eq(seeds.id, input.id),
-      });
-
-      if (!seed || seed.userId !== ctx.session.user.id) {
-        throw new Error("Seed not found");
-      }
-
-      return seed;
+      return Effect.runPromise(
+        findSeedEffect(input.id, ctx.session.user.id).pipe(
+          Effect.catchTag("NotFoundError", () =>
+            Effect.fail(
+              new TRPCError({ code: "NOT_FOUND", message: "Seed not found" }),
+            ),
+          ),
+        ),
+      );
     }),
 
   getWithTransformations: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
-      const seed = await db.query.seeds.findFirst({
-        where: and(
-          eq(seeds.id, input.id),
-          eq(seeds.userId, ctx.session.user.id),
+      const seed = await Effect.runPromise(
+        findSeedWithTransformationsEffect(input.id, ctx.session.user.id).pipe(
+          Effect.catchTag("NotFoundError", () =>
+            Effect.fail(
+              new TRPCError({ code: "NOT_FOUND", message: "Seed not found" }),
+            ),
+          ),
         ),
-        with: {
-          transformations: true,
-        },
-      });
-
-      if (!seed) {
-        throw new Error("Seed not found");
-      }
+      );
 
       return {
         seed,
@@ -80,17 +75,14 @@ export const seedsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
-      const [deleted] = await db
-        .delete(seeds)
-        .where(
-          and(eq(seeds.id, input.id), eq(seeds.userId, ctx.session.user.id)),
-        )
-        .returning();
-
-      if (!deleted) {
-        throw new Error("Seed not found");
-      }
-
-      return { success: true };
+      return Effect.runPromise(
+        deleteSeedEffect(input.id, ctx.session.user.id).pipe(
+          Effect.catchTag("NotFoundError", () =>
+            Effect.fail(
+              new TRPCError({ code: "NOT_FOUND", message: "Seed not found" }),
+            ),
+          ),
+        ),
+      );
     }),
 });

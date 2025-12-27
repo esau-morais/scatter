@@ -1,8 +1,25 @@
 import "server-only";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
+import * as Data from "effect/Data";
+import * as Effect from "effect/Effect";
+import * as Schedule from "effect/Schedule";
 import { db } from "@/db";
 import { accounts } from "@/lib/auth/auth-schema";
+import { DatabaseError } from "./database/errors";
+
+class TokenVerificationFailed extends Data.TaggedError(
+  "TokenVerificationFailed",
+)<{
+  provider: string;
+  status: number;
+  cause?: unknown;
+}> {}
+
+class TransientError extends Data.TaggedError("TransientError")<{
+  status: number;
+  cause?: unknown;
+}> {}
 
 export async function validateToken(params: {
   userId: string;
@@ -17,24 +34,44 @@ export async function validateToken(params: {
 
   if (!account?.accessToken) return false;
 
-  try {
-    const result =
-      provider === "twitter"
-        ? await verifyTwitterToken(account.accessToken)
-        : await verifyLinkedInToken(account.accessToken);
+  const verifyEffect = Effect.gen(function* () {
+    const result = yield* Effect.tryPromise({
+      try: () =>
+        provider === "twitter"
+          ? verifyTwitterToken(account.accessToken!)
+          : verifyLinkedInToken(account.accessToken!),
+      catch: (error) => new TransientError({ status: 0, cause: error }),
+    });
 
-    // Only delete the connected account when the provider confirms the token is invalid.
-    // Non-2xx responses can include transient outages (5xx) or rate limits (429),
-    // which should NOT cause users to lose their connected accounts.
     if (result.status === 401) {
-      await db.delete(accounts).where(eq(accounts.id, account.id));
-      return false;
+      yield* Effect.tryPromise({
+        try: () => db.delete(accounts).where(eq(accounts.id, account.id)),
+        catch: (error) =>
+          new DatabaseError({ operation: "deleteAccount", cause: error }),
+      });
+      return yield* Effect.fail(
+        new TokenVerificationFailed({ provider, status: 401 }),
+      );
     }
 
-    return result.ok;
-  } catch {
-    return false;
-  }
+    if (!result.ok) {
+      return yield* Effect.fail(new TransientError({ status: result.status }));
+    }
+
+    return true;
+  }).pipe(
+    Effect.catchTag("TransientError", (error) => {
+      if (error.status >= 500 || error.status === 429) {
+        return Effect.logWarning("Transient error, failing open", error).pipe(
+          Effect.as(false),
+        );
+      }
+      return Effect.succeed(false);
+    }),
+    Effect.catchTag("TokenVerificationFailed", () => Effect.succeed(false)),
+  );
+
+  return Effect.runPromise(verifyEffect);
 }
 
 type TokenVerificationResult = { ok: boolean; status: number };
@@ -57,51 +94,119 @@ async function verifyLinkedInToken(
   return { ok: res.ok, status: res.status };
 }
 
+class TokenRefreshFailed extends Data.TaggedError("TokenRefreshFailed")<{
+  provider: string;
+  cause: unknown;
+}> {}
+
+class AccountNotFound extends Data.TaggedError("AccountNotFound")<{
+  provider: string;
+}> {}
+
+class RefreshTokenMissing extends Data.TaggedError("RefreshTokenMissing")<{
+  provider: string;
+}> {}
+
 export async function getValidToken(params: {
   userId: string;
   provider: "twitter" | "linkedin";
 }): Promise<string> {
   const { userId, provider } = params;
 
-  const account = await db.query.accounts.findFirst({
-    where: (accounts, { and, eq }) =>
-      and(eq(accounts.userId, userId), eq(accounts.providerId, provider)),
-  });
-
-  if (!account) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: `${provider === "twitter" ? "X" : "LinkedIn"} account not connected. Please connect your account first.`,
+  const getTokenEffect = Effect.gen(function* () {
+    const account = yield* Effect.tryPromise({
+      try: () =>
+        db.query.accounts.findFirst({
+          where: (accounts, { and, eq }) =>
+            and(eq(accounts.userId, userId), eq(accounts.providerId, provider)),
+        }),
+      catch: (error) =>
+        new DatabaseError({ operation: "findAccount", cause: error }),
     });
-  }
 
-  if (
-    account.accessToken &&
-    account.accessTokenExpiresAt &&
-    account.accessTokenExpiresAt > new Date()
-  ) {
-    return account.accessToken;
-  }
+    if (!account) {
+      return yield* Effect.fail(new AccountNotFound({ provider }));
+    }
 
-  if (!account.refreshToken) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: `Your ${provider === "twitter" ? "X" : "LinkedIn"} session has expired. Please reconnect your account.`,
+    if (
+      account.accessToken &&
+      account.accessTokenExpiresAt &&
+      account.accessTokenExpiresAt > new Date()
+    ) {
+      return account.accessToken;
+    }
+
+    if (!account.refreshToken) {
+      return yield* Effect.fail(new RefreshTokenMissing({ provider }));
+    }
+
+    const newTokens = yield* Effect.tryPromise({
+      try: () => refreshOAuthToken(provider, account.refreshToken!),
+      catch: (error) => new TokenRefreshFailed({ provider, cause: error }),
+    }).pipe(
+      Effect.retry(
+        Schedule.exponential("100 millis").pipe(
+          Schedule.compose(Schedule.recurs(2)),
+        ),
+      ),
+      Effect.tapError((error) =>
+        Effect.logError("Token refresh failed after retries", error),
+      ),
+    );
+
+    yield* Effect.tryPromise({
+      try: () =>
+        db
+          .update(accounts)
+          .set({
+            accessToken: newTokens.accessToken,
+            accessTokenExpiresAt: newTokens.expiresAt,
+            refreshToken: newTokens.refreshToken ?? account.refreshToken,
+          })
+          .where(eq(accounts.id, account.id)),
+      catch: (error) =>
+        new DatabaseError({ operation: "updateAccount", cause: error }),
     });
-  }
 
-  const newTokens = await refreshOAuthToken(provider, account.refreshToken);
+    return newTokens.accessToken;
+  }).pipe(
+    Effect.catchTag("AccountNotFound", (error) =>
+      Effect.fail(
+        new TRPCError({
+          code: "NOT_FOUND",
+          message: `${error.provider === "twitter" ? "X" : "LinkedIn"} account not connected. Please connect your account first.`,
+        }),
+      ),
+    ),
+    Effect.catchTag("DatabaseError", (error) =>
+      Effect.fail(
+        new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Database error ocurred",
+          cause: error,
+        }),
+      ),
+    ),
+    Effect.catchTag("RefreshTokenMissing", (error) =>
+      Effect.fail(
+        new TRPCError({
+          code: "UNAUTHORIZED",
+          message: `Your ${error.provider === "twitter" ? "X" : "LinkedIn"} session has expired. Please reconnect your account.`,
+        }),
+      ),
+    ),
+    Effect.catchTag("TokenRefreshFailed", (error) =>
+      Effect.fail(
+        new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to refresh ${error.provider === "twitter" ? "X" : "LinkedIn"} token. Please try again.`,
+          cause: error.cause,
+        }),
+      ),
+    ),
+  );
 
-  await db
-    .update(accounts)
-    .set({
-      accessToken: newTokens.accessToken,
-      accessTokenExpiresAt: newTokens.expiresAt,
-      refreshToken: newTokens.refreshToken ?? account.refreshToken,
-    })
-    .where(eq(accounts.id, account.id));
-
-  return newTokens.accessToken;
+  return Effect.runPromise(getTokenEffect);
 }
 
 async function refreshOAuthToken(
