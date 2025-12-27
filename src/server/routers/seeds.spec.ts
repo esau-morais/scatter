@@ -1,13 +1,16 @@
 import { beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
-import { TRPCError } from "@trpc/server";
 import * as Effect from "effect/Effect";
 import type { seeds } from "@/db/schema";
 import { createMockContext } from "../../../tests/helpers";
-import { DatabaseError, NotFoundError } from "../lib/database/errors";
+import { NotFoundError } from "../lib/database/errors";
 
-const mockCreateSeedEffect = mock(() => Effect.succeed({} as typeof seeds.$inferSelect));
+const mockCreateSeedEffect = mock(() =>
+  Effect.succeed({} as typeof seeds.$inferSelect),
+);
 const mockListSeedsEffect = mock(() => Effect.succeed([]));
-const mockFindSeedEffect = mock(() => Effect.succeed({} as typeof seeds.$inferSelect));
+const mockFindSeedEffect = mock(() =>
+  Effect.succeed({} as typeof seeds.$inferSelect),
+);
 const mockFindSeedWithTransformationsEffect = mock(() =>
   Effect.succeed({ transformations: [] } as typeof seeds.$inferSelect & {
     transformations: unknown[];
@@ -203,7 +206,9 @@ describe("seedsRouter", () => {
       });
       const api = seedsRouter.createCaller(ctx);
 
-      await expect(api.getById({ id: seedId })).rejects.toThrow("Seed not found");
+      await expect(api.getById({ id: seedId })).rejects.toThrow(
+        "Seed not found",
+      );
     });
   });
 
@@ -265,16 +270,18 @@ describe("seedsRouter", () => {
       });
       const api = seedsRouter.createCaller(ctx);
 
-      await expect(
-        api.getWithTransformations({ id: seedId }),
-      ).rejects.toThrow("Seed not found");
+      await expect(api.getWithTransformations({ id: seedId })).rejects.toThrow(
+        "Seed not found",
+      );
     });
   });
 
   describe("delete", () => {
     test("deletes seed successfully", async () => {
       const seedId = crypto.randomUUID();
-      mockDeleteSeedEffect.mockReturnValueOnce(Effect.succeed({ success: true }));
+      mockDeleteSeedEffect.mockReturnValueOnce(
+        Effect.succeed({ success: true }),
+      );
 
       const ctx = createMockContext({
         session: { user: { id: "user1" } },
@@ -298,8 +305,9 @@ describe("seedsRouter", () => {
       });
       const api = seedsRouter.createCaller(ctx);
 
-      await expect(api.delete({ id: seedId })).rejects.toThrow("Seed not found");
+      await expect(api.delete({ id: seedId })).rejects.toThrow(
+        "Seed not found",
+      );
     });
   });
 });
-
