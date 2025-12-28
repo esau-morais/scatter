@@ -2,11 +2,9 @@
 
 import { Check, FileText, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
+import { BorderBeam } from "@/components/ui/border-beam";
 import { WaitlistForm } from "@/components/waitlist/waitlist-form";
-import { cn } from "@/lib/utils";
 import { Linkedin, Tiktok, X } from "../ui/svgs";
 
 const platforms = [
@@ -18,7 +16,7 @@ const platforms = [
 
 export function HeroSection() {
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-16 z-10">
+    <section className="relative flex min-h-screen flex-col items-center justify-center px-6 pt-16 z-10">
       {/* Window control buttons */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/4 h-80 w-80 rounded-full bg-primary/20 blur-[120px]" />
@@ -32,13 +30,12 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Badge
-            variant="secondary"
-            className="mb-6 border-primary/30 bg-primary/10 text-primary"
-          >
-            <Sparkles className="mr-1.5 size-3" />
-            Built for creators who hate busywork
-          </Badge>
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 backdrop-blur-sm">
+            <Sparkles className="size-3 text-primary" />
+            <AnimatedShinyText className="text-sm font-medium">
+              Built for creators who hate busywork
+            </AnimatedShinyText>
+          </div>
         </motion.div>
 
         <motion.h1
@@ -75,16 +72,6 @@ export function HeroSection() {
           transition={{ delay: 0.4 }}
         >
           <WaitlistForm variant="hero" />
-          <Link
-            href="/try"
-            className={cn(
-              "w-full shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)] sm:w-auto",
-              buttonVariants({ size: "lg", variant: "outline" }),
-            )}
-          >
-            <Sparkles className="mr-2 size-4" />
-            Try It Free
-          </Link>
         </motion.div>
 
         <motion.div
@@ -120,7 +107,14 @@ export function HeroSection() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.6 }}
       >
-        <div className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] rounded-2xl border border-border/50 bg-card/80 p-6 backdrop-blur-sm">
+        <div className="relative shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] rounded-2xl border border-border/50 bg-card/80 p-6 backdrop-blur-sm overflow-visible">
+          <BorderBeam
+            size={150}
+            duration={8}
+            delay={0}
+            colorFrom="var(--primary)"
+            colorTo="var(--primary)"
+          />
           <div className="mb-4 flex items-center gap-2">
             <div className="size-3 rounded-full bg-red-500/80" />
             <div className="size-3 rounded-full bg-yellow-500/80" />
@@ -134,7 +128,7 @@ export function HeroSection() {
               <div className="mb-3 text-sm font-medium text-muted-foreground">
                 Your Core Idea
               </div>
-              <div className="min-h-[120px] font-mono text-sm leading-relaxed text-foreground/90">
+              <div className="min-h-[120px] font-mono text-sm leading-relaxed text-foreground/90 wrap-break-word">
                 <span className="text-primary">|</span> The best marketing
                 doesn&apos;t feel like marketing. It feels like a friend sharing
                 something valuable. Stop selling. Start helping.
@@ -149,9 +143,11 @@ export function HeroSection() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 + i * 0.1 }}
                 >
-                  <platform.Icon className="size-4" />
-                  <span className="flex-1 text-sm">{platform.name}</span>
-                  <div className="flex size-6 items-center justify-center rounded bg-primary/10">
+                  <platform.Icon className="size-4 shrink-0" />
+                  <span className="flex-1 text-sm truncate">
+                    {platform.name}
+                  </span>
+                  <div className="flex size-6 items-center justify-center rounded bg-primary/10 shrink-0">
                     <Check className="size-3 text-primary" />
                   </div>
                 </motion.div>

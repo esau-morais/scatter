@@ -1,7 +1,10 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Scatter } from "../ui/svgs";
 
 export function Navbar() {
@@ -22,12 +25,16 @@ export function Navbar() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <Button
-            size="sm"
-            className="shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)]"
+          <Link
+            href="/try"
+            className={cn(
+              "shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] transition-all hover:shadow-[0_0_60px_oklch(0.72_0.19_30/40%),0_0_100px_oklch(0.72_0.19_30/20%)]",
+              buttonVariants({ size: "sm", variant: "default" }),
+            )}
           >
-            Join Waitlist
-          </Button>
+            <Sparkles className="mr-2 size-4" />
+            Try It Free
+          </Link>
         </motion.div>
       </div>
     </nav>

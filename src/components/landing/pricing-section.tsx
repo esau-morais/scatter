@@ -102,17 +102,18 @@ export function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
+              className={cn(plan.highlighted && "md:scale-105")}
             >
               <Card
                 className={cn(
-                  "relative h-full border-border/50 bg-card/50 p-6 backdrop-blur-sm",
+                  "relative h-full border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all",
                   plan.highlighted
-                    ? "shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] border-primary/50 bg-card/80"
+                    ? "shadow-[0_0_40px_oklch(0.72_0.19_30/30%),0_0_80px_oklch(0.72_0.19_30/15%)] border-primary/50 bg-card/80 md:p-8"
                     : "hover:border-border",
                 )}
               >
                 {plan.highlighted && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1">
                     Most Popular
                   </Badge>
                 )}

@@ -3,32 +3,44 @@
 import { Copy, MessageSquare, Sparkles, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
 
 const features = [
   {
-    title: "One Input, Four Outputs",
+    name: "One Input, Four Outputs",
     description:
       "Drop your idea once. Get platform-optimized content for X, LinkedIn, TikTok, and your blog instantly.",
-    icon: Zap,
+    Icon: Zap,
+    className: "col-span-3 lg:col-span-2",
+    colorVariation: "var(--primary)",
+    cta: "Learn more",
   },
   {
-    title: "Platform-Native Tone",
+    name: "Platform-Native Tone",
     description:
       "Each output matches platform culture—punchy for X, professional for LinkedIn, casual for TikTok.",
-    icon: MessageSquare,
+    Icon: MessageSquare,
+    className: "col-span-3 lg:col-span-1",
+    colorVariation: "var(--chart-2)",
+    cta: "Learn more",
   },
   {
-    title: "Copy & Go",
+    name: "Copy & Go",
     description:
       "One-click copy to clipboard. No API approvals, no scheduling headaches. Just create and post.",
-    icon: Copy,
+    Icon: Copy,
+    className: "col-span-3 lg:col-span-1",
+    colorVariation: "var(--chart-3)",
+    cta: "Learn more",
   },
   {
-    title: "AI-Powered Transformation",
+    name: "AI-Powered Transformation",
     description:
       "Advanced AI that understands hooks, CTAs, and formatting rules for each platform.",
-    icon: Sparkles,
+    Icon: Sparkles,
+    className: "col-span-3 lg:col-span-2",
+    colorVariation: "var(--primary)",
+    cta: "Learn more",
   },
 ];
 
@@ -52,25 +64,17 @@ export function FeaturesSection() {
           </h2>
         </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {features.map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card className="group relative h-full overflow-hidden border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-colors hover:border-primary/30 hover:bg-card/80">
-                <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <feature.icon className="size-6" />
-                </div>
-                <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <BentoGrid className="lg:grid-cols-3">
+            {features.map((feature) => (
+              <BentoCard key={feature.name} {...feature} />
+            ))}
+          </BentoGrid>
+        </motion.div>
       </div>
     </section>
   );
